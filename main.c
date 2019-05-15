@@ -27,9 +27,7 @@ int main(int argc, char **argv)
     {
         printf("%s ", argv[i]);
         char * temp = argv[i];
-        char temp2 [20];
-        strcpy(temp2, argv[i+1]);
-        if(strcmp(argv[i], "-l") == 0) load_file(temp2);
+        if(strcmp(argv[i], "-l") == 0) load_file(argv[i+1]);
         if(strcmp(argv[i], "-s") == 0) {show_commands = 1; printf("\nbecause of -s, now showing process\n");}
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
@@ -87,7 +85,7 @@ void load_file (char *File)
 
     fp = fopen(File, "r");
     if (fp == NULL){
-        printf("Could not open file %s",File);
+        printf("Could not open file ");
         return 1;
     }
     while (fgets(code, MAXCHAR, fp) != NULL)
