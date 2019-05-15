@@ -25,14 +25,12 @@ int main(int argc, char **argv)
 
     for (int i = 1  ; i < argc; ++i)
     {
-        printf("%s ", argv[i]);
+        //printf("%s ", argv[i]);
         char * temp = argv[i];
         if(strcmp(argv[i], "-l") == 0) load_file(argv[i+1]);
         if(strcmp(argv[i], "-s") == 0) {show_commands = 1; printf("\nbecause of -s, now showing process\n");}
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
-
-
 
     printf("\n\nStarting emulation..\n");
 
@@ -42,7 +40,7 @@ int main(int argc, char **argv)
         position++;
     }
     printf("type anything to continue");
-    scanf("%s");
+    getch();
     return 0;
 }
 
