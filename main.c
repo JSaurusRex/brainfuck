@@ -28,19 +28,28 @@ int main(int argc, char **argv)
         //printf("%s ", argv[i]);
         char * temp = argv[i];
         if(strcmp(argv[i], "-l") == 0) load_file(argv[i+1]);
-        if(strcmp(argv[i], "-s") == 0) {show_commands = 1; printf("\nbecause of -s, now showing process\n");}
+        else if(strcmp(argv[i], "-s") == 0) {show_commands = 1; printf("\nbecause of -s, now showing process\n");}
+	else load_file(argv[i]);
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
+    int isempty = 0;
+    for(int i = 0; i < MAXCHAR; i++)
+    {
+	if(code[i]) isempty=1;
+    }
+    if(!isempty) {
+	printf("error: no file specified\n");
+	return;
+    }
 
-    printf("\n\nStarting emulation..\n");
+    printf("Starting emulation..\n");
 
     while(code[position] != '\0')
     {
         run_code();
         position++;
     }
-    printf("type anything to continue");
-    getch();
+    //printf("type anything to continue");
     return 0;
 }
 
@@ -84,7 +93,7 @@ void load_file (char *File)
     fp = fopen(File, "r");
     if (fp == NULL){
         printf("Could not open file ");
-        return 1;
+        return;
     }
     while (fgets(code, MAXCHAR, fp) != NULL)
     //printf("%s", code);
