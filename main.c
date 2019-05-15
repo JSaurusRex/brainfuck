@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     printf("\n\nStarting emulation..\n");
 
-    while(code[position] != '!')
+    while(code[position] != '\0')
     {
         run_code();
         position++;
@@ -45,11 +45,21 @@ int main(int argc, char **argv)
 void run_code()
 {
     printf("%c", code[position]);
+
+    if(code[position] == '<') {
+        currentarray--;
+        if(currentarray < 0) currentarray = MAXCHAR;
+        if(currentarray > MAXCHAR) currentarray = 0;}
+    if(code[position] == '>') {
+        currentarray--;
+        if(currentarray < 0) currentarray = MAXCHAR;
+        if(currentarray > MAXCHAR) currentarray = 0;}
+
     if(code[position] == '+') intarray[currentarray]++;
     if(code[position] == '-') intarray[currentarray]--;
 
-    if(code[position] == '.') printf("%i", intarray[currentarray]);
-    if(code[position] == ',') scanf("%i", intarray[currentarray]);
+    if(code[position] == '.') printf("%c", intarray[currentarray]);
+    if(code[position] == ',') scanf("%c", &intarray[currentarray]);
 
     if(code[position] == '[') {lastcolon++; colon[lastcolon] == position;}
     if(code[position] == ']') {
