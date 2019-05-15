@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-char * code;
+#define MAXCHAR 1000
+char code[MAXCHAR];
 int code_length;
 
 int intarray[1000]; //all variables (array)
@@ -12,7 +12,7 @@ int lastcolon;
 int position;
 
 void run_code();
-char * load_file (char *File);
+void load_file (char *File);
 
 
 int main(int argc, char **argv)
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
 
-    code = load_file("./text.txt");
+    load_file("./text.txt");
 
 
     printf("\n\nStarting emulation..\n");
@@ -62,39 +62,20 @@ void run_code()
     }}
 }
 
-char * load_file (char *File)
+void load_file (char *File)
 {
     printf("loading file\n");
-    //char * buffer = "";
-    //free(buffer);
-    char * buffer = NULL;
-    size_t size = 0;
+    FILE *fp;
 
-    /* Open your_file in read-only mode */
-    FILE *fp = NULL;
-    fp = fopen(File, "rb");
-
-    /* Get the buffer size */
-    fseek(fp, 0, SEEK_END); /* Go to end of file */
-    size = ftell(fp); /* How many bytes did we pass ? */
-
-    /* Set position of stream to the beginning */
-    rewind(fp);
-
-    /* Allocate the buffer (no need to initialize it with calloc) */
-    buffer = malloc((size + 1) * sizeof(*buffer)); /* size + 1 byte for the \0 */
-
-    /* Read the file into the buffer */
-    fread(buffer, size, 1, fp); /* Read 1 chunk of size bytes from fp into buffer */
-
-
-    /* NULL-terminate the buffer */
-    buffer[size] = '\0';
+    fp = fopen(File, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",File);
+        return 1;
+    }
+    while (fgets(code, MAXCHAR, fp) != NULL)
+        printf("%s", code);
     fclose(fp);
-
-    //printf("%s\n", buffer);
-
-    return buffer;
+    return;
 }
 
 
