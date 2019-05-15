@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 
-char code[1000];
+char * code;
 int code_length;
 
 int intarray[1000]; //all variables (array)
@@ -12,7 +12,7 @@ int lastcolon;
 int position;
 
 void run_code();
-void loadfile (char * str);
+char * load_file (char *File);
 
 
 int main(int argc, char **argv)
@@ -24,10 +24,10 @@ int main(int argc, char **argv)
     {
         printf("%s ", argv[i]);
         //if(argv[i] == "-l") {loadfile(argv[i+1]);}
-        if(argv[i] == "-l") {loadfile("./text.txt");}
+        //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
 
-    //code = loadfile("./text.txt");
+    code = load_file("./text.txt");
 
 
     printf("\n\nStarting emulation..\n");
@@ -62,13 +62,17 @@ void run_code()
     }}
 }
 
-void loadfile (char * str) {
+char * load_file (char *File)
+{
     printf("loading file\n");
-    char *buffer = NULL;
+    //char * buffer = "";
+    //free(buffer);
+    char * buffer = NULL;
     size_t size = 0;
 
     /* Open your_file in read-only mode */
-    FILE *fp = fopen(str, "r");
+    FILE *fp = NULL;
+    fp = fopen(File, "rb");
 
     /* Get the buffer size */
     fseek(fp, 0, SEEK_END); /* Go to end of file */
@@ -83,20 +87,14 @@ void loadfile (char * str) {
     /* Read the file into the buffer */
     fread(buffer, size, 1, fp); /* Read 1 chunk of size bytes from fp into buffer */
 
+
     /* NULL-terminate the buffer */
     buffer[size] = '\0';
+    fclose(fp);
 
-    /* Print it ! */
-    printf("%s\n", buffer);
+    //printf("%s\n", buffer);
 
-
-
-    for(int i = 0; i <= size; i++)
-    {
-        code[i] = buffer[i];
-    }
-
-    //return buffer;
+    return buffer;
 }
 
 
