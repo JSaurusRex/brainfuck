@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	if(code[i]) isempty=1;
     }
     if(!isempty) {
-	printf("error: no file specified\n");
+	printf("error: no file specified");
 	return;
     }
 
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
         position++;
     }
     //printf("type anything to continue");
+    printf("\n");
     return 0;
 }
 
