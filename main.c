@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAXCHAR 5000
 char code[MAXCHAR];
@@ -25,12 +26,14 @@ int main(int argc, char **argv)
     for (int i = 1  ; i < argc; ++i)
     {
         printf("%s ", argv[i]);
-        if(argv[i] == "-l") {load_file(argv[i+1]);}
-        if(argv[i] == "-s") {show_commands = 1;}
+        char * temp = argv[i];
+        char temp2 [20];
+        strcpy(temp2, argv[i+1]);
+        if(strcmp(argv[i], "-l") == 0) load_file(temp2);
+        if(strcmp(argv[i], "-s") == 0) {show_commands = 1; printf("\nbecause of -s, now showing process\n");}
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
 
-    load_file("./text.txt");
 
 
     printf("\n\nStarting emulation..\n");
@@ -40,8 +43,8 @@ int main(int argc, char **argv)
         run_code();
         position++;
     }
-
-
+    printf("type anything to continue");
+    scanf("%s");
     return 0;
 }
 
