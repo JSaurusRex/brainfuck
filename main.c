@@ -3,12 +3,14 @@
 #include <string.h>
 
 #define MAXCHAR 5000
+#define MAXINT 2000
+#define MAXCOLON 1000
 char * code;
 int code_length;
 
-int intarray[2000]; //all variables (array)
+int * intarray; //all variables (array)
 int currentarray; //what variable is currently in use
-int colon[1000]; //what the position is of the last colon (array)
+int * colon; //what the position is of the last colon (array)
 int lastcolon;
 int position;
 
@@ -21,6 +23,8 @@ void load_file (char *File);
 int main(int argc, char **argv)
 {
     code = malloc(sizeof(char)*MAXCHAR);
+    intarray = malloc(sizeof(int)*MAXINT);
+    colon = malloc(sizeof(int)*MAXCOLON);
 
     //checks arguments
     int isempty = 0;
@@ -41,7 +45,7 @@ int main(int argc, char **argv)
 
     printf("Starting emulation..\n");
 
-    while(code[position] != '\0')
+    while(code[position] != '\0' && position < MAXCHAR)
     {
         run_code();
         position++;
@@ -57,8 +61,8 @@ void run_code()
 
     if(code[position] == '<') {
         currentarray--;
-        if(currentarray < 0) currentarray = MAXCHAR;
-        if(currentarray > MAXCHAR) currentarray = 0;}
+        if(currentarray < 0) currentarray = MAXCOLON;
+        if(currentarray > MAXCOLON) currentarray = 0;}
     if(code[position] == '>') {
         currentarray--;
         if(currentarray < 0) currentarray = MAXCHAR;
