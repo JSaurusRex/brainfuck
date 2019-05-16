@@ -67,8 +67,8 @@ void run_code()
     if(code[position] == '+') intarray[currentarray]++;
     if(code[position] == '-') intarray[currentarray]--;
 
-    if(code[position] == '.') printf("%c", intarray[currentarray]);
-    if(code[position] == ',') scanf("%c", &intarray[currentarray]);
+    if(code[position] == '.') printf("%lc", intarray[currentarray]);
+    if(code[position] == ',') scanf("%lc", &intarray[currentarray]);
 
     if(code[position] == '[') {lastcolon++; colon[lastcolon] == position;}
     if(code[position] == ']') {
