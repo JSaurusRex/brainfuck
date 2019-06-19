@@ -39,11 +39,11 @@ int main(int argc, char **argv)
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
     if(!isempty) {
-	printf("error: no file specified\n");
+	//printf("error: no file specified\n");
 	return 0;
     }
 
-    printf("Starting emulation..\n");
+    //printf("Starting emulation..\n");
 
     while(code[position] != '\0' && position < MAXCHAR)
     {

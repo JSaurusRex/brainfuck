@@ -1,0 +1,6 @@
+sudo apt install postgresql postgresql-contrib
+sudo passwd postgres
+
+sudo -i -u postgres
+createuser --interactive
+(shall the new rike be a superuser) yes
