@@ -62,24 +62,27 @@ void run_code()
     if(code[position] == '<') {
         currentarray--;
         if(currentarray < 0) currentarray = MAXCOLON;
-        if(currentarray > MAXCOLON) currentarray = 0;}
+        if(currentarray > MAXCOLON) currentarray = 0;
+        return;}
     if(code[position] == '>') {
         currentarray--;
         if(currentarray < 0) currentarray = MAXCHAR;
-        if(currentarray > MAXCHAR) currentarray = 0;}
+        if(currentarray > MAXCHAR) currentarray = 0;
+        return;}
 
-    if(code[position] == '+') intarray[currentarray]++;
-    if(code[position] == '-') intarray[currentarray]--;
+    if(code[position] == '+') {intarray[currentarray]++; if(intarray[currentarray] > 255) intarray[currentarray]=0; return;}
+    if(code[position] == '-') {intarray[currentarray]--; if(intarray[currentarray] < 0) intarray[currentarray]=255; return;}
 
-    if(code[position] == '.') printf("%lc", intarray[currentarray]);
-    if(code[position] == ',') scanf("%lc", &intarray[currentarray]);
+    if(code[position] == '.') {printf("%c%i", intarray[currentarray], intarray[currentarray]); return;}
+    if(code[position] == ',') {scanf("%c", &intarray[currentarray]); return;}
 
-    if(code[position] == '[') {lastcolon++; colon[lastcolon] == position;}
+    if(code[position] == '[') {lastcolon++; colon[lastcolon] == position; return;}
     if(code[position] == ']') {
         if(intarray[currentarray] <= 0){
             //if the loop gets exited
             lastcolon--;
             if(lastcolon < 0) printf("there is an error in your program, ] is before [");
+            return;
         }else{
             //if it loops
             position = colon[lastcolon];
