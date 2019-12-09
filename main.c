@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAXCHAR 5000
 #define MAXINT 1000
-#define MAXCOLON 1000
-#define MAXBUFFER 20
+#define MAXCOLON 10000
+#define MAXBUFFER 50
 char * code;
 int code_length;
 
@@ -26,9 +25,10 @@ int display = 0;
 
 int main(int argc, char **argv)
 {
-    //code = malloc(sizeof(char)*MAXCHAR);
     intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
     colon = (int*) calloc(MAXCOLON, sizeof(int));
+
+
 
     buffer = (unsigned char*) calloc(MAXBUFFER, sizeof(unsigned char));
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         //load_file("helloworld.txt");
         return 0;
     }
-    printf("\n length: %i", code_length);
+    printf("\n length: %i\n", code_length);
 
     //printf("Starting emulation..\n");
     position = 0;
@@ -73,13 +73,17 @@ int main(int argc, char **argv)
         position++;
     }
     displayBuffer();
+    printf("\nend of program");
+    free(intarray);
+    free(colon);
+    free(buffer);
     //printf("type anything to continue");
     return 0;
 }
 
 void run_code()
 {
-    if(show_commands == 1) printf("%c", code[position]);
+    if(show_commands == 1) addtoBuffer(code[position]);
 
     if(code[position] == '<') {
         currentarray--;
@@ -88,7 +92,7 @@ void run_code()
         return;}
     if(code[position] == '>') {
         currentarray++;
-        if(currentarray > MAXCHAR) currentarray = 0;
+        if(currentarray > MAXCOLON) currentarray = 0;
         if(debug == 1) printf("|%i|", currentarray);
         return;}
 
@@ -112,15 +116,27 @@ void run_code()
     if(code[position] == '.') {
 
         addtoBuffer(intarray[currentarray]);
-        if(show_values == 1) addtoBuffer(intarray[currentarray]);
+        if(show_values == 1) printf("[%i]", intarray[currentarray]);
 
         return;
     }
     if(code[position] == ',') {displayBuffer(); scanf("%c",&intarray[currentarray]); return;}
 
     if(code[position] == '[') {
-        lastcolon++;
-        colon[lastcolon] = position;
+        if(intarray[currentarray] == 0)
+        {
+            int tmp = 1;
+            while(tmp != 0)
+            {
+                position++;
+                if(code[position] == '[') tmp++;
+                if(code[position] == ']') tmp--;
+            }
+
+        }else {
+            lastcolon++;
+            colon[lastcolon] = position;
+        }
         return;
     }
     if(code[position] == ']') {
