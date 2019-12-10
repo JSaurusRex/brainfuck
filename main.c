@@ -13,7 +13,7 @@ int currentarray; //what variable is currently in use
 int * colon; //what the position is of the last colon (array)
 int * colonClose;
 int lastcolon = 0;
-int position;
+int position = 0;
 
 int show_commands = 0;
 int show_values = 0;
@@ -23,8 +23,11 @@ int debug = 0;
 unsigned char * buffer;
 int display = 0;
 
+int compileLength;
+int pos = 0;
 
-void (*funcs[200]) ();
+
+void (*funcs[20000]) ();
 
 void plus1 ()
 {
@@ -78,24 +81,37 @@ void loopClose ()
     printf("loopClose ");
     if(intarray[currentarray] != 0)
     {
+    	//loop
         position = colon[lastcolon];
     }else lastcolon--;
 }
 
 void point ()
 {
-    addtoBuffer(intarray[currentarray]);
+    //addtoBuffer(intarray[currentarray]);
+    printf("point: (%c), %i ", intarray[currentarray], intarray[currentarray]);
+}
+
+void input ()
+{
+	//displayBuffer();
+	scanf("%c",&intarray[currentarray]);
 }
 
 void moveRight ()
 {
-    intarray++;
+	printf("moveRight ");
+    currentarray++;
+    if(currentarray >= MAXCOLON) currentarray = 0;
 }
 
 void moveLeft ()
 {
-    intarray--;
+	printf("moveLeft ");
+    currentarray--;
+    if(currentarray < 0) currentarray=MAXCOLON-1;
 }
+
 
 
 int main(int argc, char **argv)
@@ -141,21 +157,21 @@ int main(int argc, char **argv)
     printf("\n length: %i\n", code_length);
 
     //printf("Starting emulation..\n");
-    position = 0;
 
-
-    while(code[position] != '\0' && position < code_length)
+    while(position < pos)
     {
         //run_code();
-        (*funcs[position]) ();
+        //printf("\nposition: %i", position);
+        (*funcs[position])();
+        printf("   	int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
         position++;
     }
     displayBuffer();
-    printf("\nend of program");
-    free(intarray);
-    free(colon);
-    free(colonClose);
-    free(buffer);
+    printf("\nend of program\n");
+    //free(intarray);
+    //free(colon);
+    //free(colonClose);
+    //free(buffer);
     //printf("type anything to continue");
     return 0;
 }
@@ -256,37 +272,37 @@ void displayBuffer()
 }
 
 int intcount = 0;
-int pos = 0;
+
 int colonCount= 0;
 void compile (char c)
 {
     printf("\n%c pos:%i  intcount: %i", c, pos, intcount);
+	printf(" |");
     if(intcount != 0)
     {
         if(c != '-' && c != '+')
         {
-            printf("\n");
             if(intcount < 0)
             {
                 while(intcount <= -5)
                 {
                     printf(" -5");
                     intcount+=5;
-                    funcs[pos]=&min5;
+                    funcs[pos]=min5;
                     pos++;
                 }
                 while(intcount <= -2)
                 {
                     printf(" -2");
                     intcount+=2;
-                    funcs[pos]=&min2;
+                    funcs[pos]=min2;
                     pos++;
                 }
                 while(intcount <= -1)
                 {
                     printf(" -1");
                     intcount++;
-                    funcs[pos]=&min1;
+                    funcs[pos]=min1;
                     pos++;
                 }
             }
@@ -296,21 +312,21 @@ void compile (char c)
                 {
                     printf(" +5");
                     intcount-=5;
-                    funcs[pos]=&plus5;
+                    funcs[pos]=plus5;
                     pos++;
                 }
                 while(intcount >= 2)
                 {
                     printf(" +2");
                     intcount-=2;
-                    funcs[pos]=&plus2;
+                    funcs[pos]=plus2;
                     pos++;
                 }
                 while(intcount >= 1)
                 {
                     printf(" +1");
                     intcount--;
-                    funcs[pos]=&plus1;
+                    funcs[pos]=plus1;
                     pos++;
                 }
             }
@@ -322,14 +338,14 @@ void compile (char c)
     if(c == '>')
     {
         printf(" move right");
-        funcs[pos] = &moveLeft;
+        funcs[pos] = moveLeft;
         pos++;
     }
 
     if(c == '<')
     {
         printf(" move left");
-        funcs[pos] = &moveRight;
+        funcs[pos] = moveRight;
         pos++;
     }
 
@@ -337,23 +353,26 @@ void compile (char c)
     {
         printf(" loop open");
         colonCount++;
-        funcs[pos] = &loopOpen;
+        funcs[pos] = loopOpen;
         colon[colonCount] = pos;
+        printf(" (colon: %i, pos %i)", colonCount, pos);
         pos++;
     }
 
     if(c == ']')
     {
         printf(" loop close");
-        funcs[pos] = &loopOpen;
+        funcs[pos] = loopClose;
         colonClose[colonCount] = pos;
+        printf(" (colon: %i, pos %i)", colonCount, pos);
         colonCount--;
         pos++;
     }
 
     if(c == '.')
     {
-        funcs[pos] = &point;
+    	printf(" point");
+        funcs[pos] = point;
         pos++;
     }
 
