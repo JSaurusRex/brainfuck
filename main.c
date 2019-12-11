@@ -13,6 +13,7 @@ int currentarray; //what variable is currently in use
 int * colon; //what the position is of the last colon (array)
 int * colonClose;
 int lastcolon = 0;
+int lastcolonClose = 0;
 int position = 0;
 
 int show_commands = 0;
@@ -72,7 +73,6 @@ void loopOpen()
     if(intarray[currentarray] == 0)
     {
         position = colonClose[lastcolon];
-        lastcolon--;
     }
 }
 
@@ -82,8 +82,8 @@ void loopClose ()
     if(intarray[currentarray] != 0)
     {
     	//loop
-        position = colon[lastcolon];
-    }else lastcolon--;
+        position = colon[lastcolonClose];
+    }
 }
 
 void point ()
@@ -274,6 +274,8 @@ void displayBuffer()
 int intcount = 0;
 
 int colonCount= 0;
+int colonCloseCount = 0;
+int colondeep = 0;
 void compile (char c)
 {
     printf("\n%c pos:%i  intcount: %i", c, pos, intcount);
@@ -352,9 +354,9 @@ void compile (char c)
     if(c == '[')
     {
         printf(" loop open");
-        colonCount++;
         funcs[pos] = loopOpen;
         colon[colonCount] = pos;
+        colonCount++;
         printf(" (colon: %i, pos %i)", colonCount, pos);
         pos++;
     }
@@ -363,9 +365,9 @@ void compile (char c)
     {
         printf(" loop close");
         funcs[pos] = loopClose;
-        colonClose[colonCount] = pos;
+        colonClose[colonCloseCount] = pos;
+        colonCloseCount++;
         printf(" (colon: %i, pos %i)", colonCount, pos);
-        colonCount--;
         pos++;
     }
 
