@@ -5,17 +5,15 @@
 
 #define MAXINT 1000
 #define MAXCOLON 1000
-#define MAXBUFFER 50
+#define MAXBUFFER 5000
 char * code;
 int code_length = 0;
 
 unsigned char * intarray; //all variables (array)
 int currentarray; //what variable is currently in use
 int * colon; //what the position is of the last colon (array)
-int * colonClose;
-int lastcolon = 0;
-int lastcolonClose = 0;
-int position = 0;
+short int lastcolon = 0;
+short int position = 0;
 
 short int show_commands = 0;
 short int show_values = 0;
@@ -27,76 +25,17 @@ short int optimazation = 0;
 unsigned char * buffer;
 int display = 0;
 
-int compileLength;
 int pos = 0;
 
-int funcs[20000];
+short int funcs[20000];
 
-void add()
-{
-    //if(show_commands == 1) printf("plus ");
-    position++;
-    intarray[currentarray] += funcs[position];
-}
-
-void loopOpen()
-{
-    //if(show_commands == 1) printf("loopOpen ");
-    if(intarray[currentarray] == 0)
-    {
-        position = funcs[position+1];
-    }
-    position++;
-}
-
-void loopClose()
-{
-    //if(show_commands == 1) printf("loopOpen ");
-    if(intarray[currentarray] != 0)
-    {
-        position = funcs[position+1];
-    }
-    position++;
-}
-
-
-
-void point ()
-{
-    addtoBuffer(intarray[currentarray]);
-    //printf("point: (%c), %i ", intarray[currentarray], intarray[currentarray]);
-}
-
-void input ()
-{
-	displayBuffer();
-	scanf("%c",&intarray[currentarray]);
-}
-
-void move ()
-{
-	//if(show_commands == 1) printf("moveRight ");
-	position++;
-
-    currentarray+= funcs[position];
-    if(currentarray >= MAXCOLON) currentarray += MAXCOLON;
-}
-
-
+void displayBuffer();
+void addtoBuffer(char c);
+void run_code();
 
 int main(int argc, char **argv)
 {
-    intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
     colon = (int*) calloc(MAXCOLON, sizeof(int));
-    colonClose = (int*) calloc(MAXCOLON, sizeof(int));
-
-
-
-    buffer = (unsigned char*) calloc(MAXBUFFER, sizeof(unsigned char));
-
-
-
-
 
     //checks arguments
     int isempty = 0;
@@ -126,7 +65,13 @@ int main(int argc, char **argv)
         return 0;
     }
     if(optimazation == 0)printf("\n length: %i\n", code_length);
-    else printf("\n length: %i\n", pos);
+    else
+    {
+        printf("\n length: %i\n", pos);
+        free(colon);
+    }
+    intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
+    buffer = (unsigned char*) calloc(MAXBUFFER, sizeof(unsigned char));
 
     //printf("Starting emulation..\n");
     clock_t begin = clock();
@@ -170,6 +115,11 @@ int main(int argc, char **argv)
                     addtoBuffer(intarray[currentarray]);
                     break;
 
+                case 5: //clear
+                    //printf("\npos: %i  cel: %i", position, currentarray);
+                    intarray[currentarray] = 0;
+                    break;
+
             }
             //if(show_commands == 1)
             //printf("   int: %i   position: %i    cel: %i\n", intarray[currentarray], position, currentarray);
@@ -182,7 +132,7 @@ int main(int argc, char **argv)
         }
 
     displayBuffer();
-    printf("\nend of program, time: %ld\n", (begin - clock()) / CLOCKS_PER_SEC);
+    printf("\nend of program, time: %f\n", (double) (begin - clock()) / CLOCKS_PER_SEC);
     //free(intarray);
     //free(colon);
     //free(colonClose);
@@ -292,10 +242,23 @@ int movecount = 0;
 int colonCount= 0;
 int colonCloseCount = 0;
 int colondeep = 0;
+char lastchar[3];
 void compile (char c)
 {
-    //printf("\n%c pos:%i  intcount: %i", c, pos, intcount);
-	//printf(" |");
+    lastchar[2] = lastchar[1];
+    lastchar[1] = lastchar[0];
+    lastchar[0] = c;
+
+
+
+
+    if(lastchar[2] == '[' && lastchar[1] == '-'&& c == ']')
+    {
+        pos-= 2;
+        funcs[pos] = 5;
+        pos++;
+        intcount = 0;
+    }
     if(intcount != 0)
     {
         if(c != '-' && c != '+')

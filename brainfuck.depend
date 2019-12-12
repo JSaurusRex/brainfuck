@@ -1,8 +1,9 @@
 # depslib dependency file v1.0
-1575892586 source:d:\desktop\c++\brainfuck\main.c
+1576173288 source:d:\desktop\c++\brainfuck\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	<time.h>
 
 1557745930 d:\desktop\c++\brainfuck\functions.h
 
