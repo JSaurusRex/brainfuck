@@ -33,45 +33,23 @@ int pos = 0;
 
 void (*funcs[20000]) ();
 
-void plus1 ()
+void plus()
 {
-    //printf("plus1 ");
-    intarray[currentarray]++;
+    if(show_commands == 1) printf("plus ");
+    position++;
+    intarray[currentarray] += funcs[position];
 }
 
-void plus2 ()
+void min ()
 {
-    //printf("plus2 ");
-    intarray[currentarray]+=2;
-}
-
-void plus5()
-{
-    //printf("plus5 ");
-    intarray[currentarray]+=5;
-}
-
-void min1 ()
-{
-    //printf("min1 ");
-    intarray[currentarray]--;
-}
-
-void min2 ()
-{
-    //printf("min2 ");
-    intarray[currentarray]-=2;
-}
-
-void min5()
-{
-    //printf("min5 ");
-    intarray[currentarray]-=5;
+    if(show_commands == 1) printf("min ");
+    position++;
+    intarray[currentarray] -= (int) funcs[position];
 }
 
 void loopOpen()
 {
-    //printf("loopOpen ");
+    if(show_commands == 1) printf("loopOpen ");
     lastcolon++;
     if(intarray[currentarray] == 0)
     {
@@ -82,7 +60,7 @@ void loopOpen()
 
 void loopClose ()
 {
-    //printf("loopClose ");
+    if(show_commands == 1) printf("loopClose ");
     if(intarray[currentarray] != 0)
     {
     	//loop
@@ -105,16 +83,19 @@ void input ()
 
 void moveRight ()
 {
-	//printf("moveRight ");
-    currentarray++;
-    if(currentarray >= MAXCOLON) currentarray = 0;
+	if(show_commands == 1) printf("moveRight ");
+	position++;
+
+    currentarray+= funcs[position];
+    if(currentarray >= MAXCOLON) currentarray -= MAXCOLON;
 }
 
 void moveLeft ()
 {
-	//printf("moveLeft ");
-    currentarray--;
-    if(currentarray < 0) currentarray=MAXCOLON-1;
+	if(show_commands == 1) printf("moveLeft ");
+	position++;
+    currentarray -= (int) funcs[position];
+    if(currentarray < 0) currentarray += MAXCOLON;
 }
 
 
@@ -168,13 +149,13 @@ int main(int argc, char **argv)
     if(optimazation == 1)
         while(position < pos)
         {
-            else (*funcs[position])();
-            //printf("   	int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
+            (*funcs[position])();
+            if(show_commands == 1) printf("   int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
             position++;
         }
     else while(position < code_length)
         {
-            if(optimazation == 0)run_code();
+            run_code();
             position++;
         }
 
@@ -284,6 +265,7 @@ void displayBuffer()
 }
 
 int intcount = 0;
+int movecount = 0;
 
 int colonCount= 0;
 int colonCloseCount = 0;
@@ -298,70 +280,48 @@ void compile (char c)
         {
             if(intcount < 0)
             {
-                while(intcount <= -5)
-                {
-                    //printf(" -5");
-                    intcount+=5;
-                    funcs[pos]=min5;
-                    pos++;
-                }
-                while(intcount <= -2)
-                {
-                    //printf(" -2");
-                    intcount+=2;
-                    funcs[pos]=min2;
-                    pos++;
-                }
-                while(intcount <= -1)
-                {
-                    //printf(" -1");
-                    intcount++;
-                    funcs[pos]=min1;
-                    pos++;
-                }
-            }
-        if(intcount > 0)
+                funcs[pos] = min;
+                pos++;
+                funcs[pos] = -intcount;
+                intcount = 0;
+                pos++;
+            }else if (intcount > 0)
             {
-                while(intcount >= 5)
-                {
-                    //printf(" +5");
-                    intcount-=5;
-                    funcs[pos]=plus5;
-                    pos++;
-                }
-                while(intcount >= 2)
-                {
-                    //printf(" +2");
-                    intcount-=2;
-                    funcs[pos]=plus2;
-                    pos++;
-                }
-                while(intcount >= 1)
-                {
-                    //printf(" +1");
-                    intcount--;
-                    funcs[pos]=plus1;
-                    pos++;
-                }
+                funcs[pos] = plus;
+                pos++;
+                funcs[pos] = intcount;
+                intcount = 0;
+                pos++;
             }
         }
     }
     if(c == '+') intcount++;
     if(c == '-') intcount--;
 
-    if(c == '>')
+    if(movecount != 0)
     {
-        //printf(" move right");
-        funcs[pos] = moveLeft;
-        pos++;
+        if(c != '<' && c != '>')
+        {
+            if(movecount < 0)
+            {
+                funcs[pos] = moveLeft;
+                pos++;
+                funcs[pos] = -movecount;
+                movecount = 0;
+                pos++;
+            }else if(movecount > 0)
+            {
+                funcs[pos] = moveRight;
+                pos++;
+                funcs[pos] = movecount;
+                movecount = 0;
+                pos++;
+            }
+        }
     }
 
-    if(c == '<')
-    {
-        //printf(" move left");
-        funcs[pos] = moveRight;
-        pos++;
-    }
+    if(c == '>') movecount++;
+    if(c == '<') movecount--;
 
     if(c == '[')
     {
