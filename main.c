@@ -30,8 +30,7 @@ int display = 0;
 int compileLength;
 int pos = 0;
 
-
-void (*funcs[20000]) ();
+int funcs[20000];
 
 void add()
 {
@@ -50,16 +49,17 @@ void loopOpen()
     position++;
 }
 
-void loopClose ()
+void loopClose()
 {
-    //if(show_commands == 1) printf("loopClose ");
+    //if(show_commands == 1) printf("loopOpen ");
     if(intarray[currentarray] != 0)
     {
-    	//loop
         position = funcs[position+1];
     }
     position++;
 }
+
+
 
 void point ()
 {
@@ -133,8 +133,46 @@ int main(int argc, char **argv)
     if(optimazation == 1)
         while(position < pos)
         {
-            (*funcs[position])();
-            //if(show_commands == 1) printf("   int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
+            //(*funcs[position])();
+            switch(funcs[position])
+            {
+                case 0: //add
+                    position++;
+                    intarray[currentarray] += funcs[position];
+                    break;
+
+                case 1: //move
+                    position++;
+                    currentarray+= funcs[position];
+                    if(currentarray >= MAXCOLON) currentarray -= MAXCOLON;
+                    else if(currentarray < 0) currentarray+= MAXCOLON;
+                    break;
+
+                case 2: //loop open
+                    position++;
+                    //printf("loopO ");
+                    if(intarray[currentarray] == 0)
+                    {
+                        position = funcs[position];
+                    }
+                    break;
+
+                case 3: //loop close
+                    position++;
+                    //printf("loopC ");
+                    if(intarray[currentarray] != 0)
+                    {
+                        position = funcs[position];
+                    }
+                    break;
+
+                case 4: //point
+                    addtoBuffer(intarray[currentarray]);
+                    break;
+
+            }
+            //if(show_commands == 1)
+            //printf("   int: %i   position: %i    cel: %i\n", intarray[currentarray], position, currentarray);
             position++;
         }
     else while(position < code_length)
@@ -262,7 +300,7 @@ void compile (char c)
     {
         if(c != '-' && c != '+')
         {
-            funcs[pos] = add;
+            funcs[pos] = 0;
             pos++;
             funcs[pos] = intcount;
             intcount = 0;
@@ -276,7 +314,7 @@ void compile (char c)
     {
         if(c != '<' && c != '>')
         {
-            funcs[pos] = move;
+            funcs[pos] = 1;
             pos++;
             funcs[pos] = movecount;
             movecount = 0;
@@ -290,7 +328,7 @@ void compile (char c)
     if(c == '[')
     {
         //printf(" loop open");
-        funcs[pos] = loopOpen;
+        funcs[pos] = 2;
         colonCount++;
         colon[colonCount] = pos;
         //printf(" (colon: %i, pos %i)", colonCount, pos);
@@ -300,7 +338,7 @@ void compile (char c)
     if(c == ']')
     {
         //printf(" loop close");
-        funcs[pos] = loopClose;
+        funcs[pos] = 3;
         funcs[pos+1] = colon[colonCount];
         funcs[colon[colonCount]+1] = pos;
         //printf(" (colon: %i, pos %i)", colonCount, pos);
@@ -311,7 +349,7 @@ void compile (char c)
     if(c == '.')
     {
     	//printf(" point");
-        funcs[pos] = point;
+        funcs[pos] = 4;
         pos++;
     }
 
