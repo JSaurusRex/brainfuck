@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAXINT 1000
 #define MAXCOLON 1000
 #define MAXBUFFER 50
 char * code;
-int code_length;
+int code_length = 0;
 
 unsigned char * intarray; //all variables (array)
 int currentarray; //what variable is currently in use
@@ -16,9 +17,11 @@ int lastcolon = 0;
 int lastcolonClose = 0;
 int position = 0;
 
-int show_commands = 0;
-int show_values = 0;
-int debug = 0;
+short int show_commands = 0;
+short int show_values = 0;
+short int debug = 0;
+short int optimazation = 0;
+
 
 
 unsigned char * buffer;
@@ -32,82 +35,84 @@ void (*funcs[20000]) ();
 
 void plus1 ()
 {
-    printf("plus1 ");
+    //printf("plus1 ");
     intarray[currentarray]++;
 }
 
 void plus2 ()
 {
-    printf("plus2 ");
+    //printf("plus2 ");
     intarray[currentarray]+=2;
 }
 
 void plus5()
 {
-    printf("plus5 ");
+    //printf("plus5 ");
     intarray[currentarray]+=5;
 }
 
 void min1 ()
 {
-    printf("min1 ");
+    //printf("min1 ");
     intarray[currentarray]--;
 }
 
 void min2 ()
 {
-    printf("min2 ");
+    //printf("min2 ");
     intarray[currentarray]-=2;
 }
 
 void min5()
 {
-    printf("min5 ");
+    //printf("min5 ");
     intarray[currentarray]-=5;
 }
 
 void loopOpen()
 {
-    printf("loopOpen ");
+    //printf("loopOpen ");
     lastcolon++;
     if(intarray[currentarray] == 0)
     {
-        position = colonClose[lastcolon];
+        position = funcs[position+1];
     }
+    position++;
 }
 
 void loopClose ()
 {
-    printf("loopClose ");
+    //printf("loopClose ");
     if(intarray[currentarray] != 0)
     {
     	//loop
-        position = colon[lastcolonClose];
+        position = funcs[position+1];
     }
+    position++;
 }
 
 void point ()
 {
-    //addtoBuffer(intarray[currentarray]);
-    printf("point: (%c), %i ", intarray[currentarray], intarray[currentarray]);
+    addtoBuffer(intarray[currentarray]);
+    //printf("point: (%c), %i ", intarray[currentarray], intarray[currentarray]);
 }
 
 void input ()
 {
-	//displayBuffer();
+	displayBuffer();
 	scanf("%c",&intarray[currentarray]);
 }
 
 void moveRight ()
 {
-	printf("moveRight ");
+	//printf("moveRight ");
     currentarray++;
     if(currentarray >= MAXCOLON) currentarray = 0;
 }
 
 void moveLeft ()
 {
-	printf("moveLeft ");
+	//printf("moveLeft ");
     currentarray--;
     if(currentarray < 0) currentarray=MAXCOLON-1;
 }
@@ -142,6 +147,7 @@ int main(int argc, char **argv)
                 if(argv[i][j] == 's') {show_commands = 1; printf("\nshowing process");}
                 if(argv[i][j] == 'v') {show_values = 1; printf("\nshowing values");}
                 if(argv[i][j] == 'd') {debug = 1; printf("\nDebug mode Active");}
+                if(argv[i][j] == 'o') {optimazation = 1; printf("\nOptimization mode Active");}
 
             }
         }
@@ -154,20 +160,26 @@ int main(int argc, char **argv)
         //load_file("helloworld.txt");
         return 0;
     }
-    printf("\n length: %i\n", code_length);
+    if(optimazation == 0)printf("\n length: %i\n", code_length);
+    else printf("\n length: %i\n", pos);
 
     //printf("Starting emulation..\n");
+    clock_t begin = clock();
+    if(optimazation == 1)
+        while(position < pos)
+        {
+            else (*funcs[position])();
+            //printf("   	int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
+            position++;
+        }
+    else while(position < code_length)
+        {
+            if(optimazation == 0)run_code();
+            position++;
+        }
 
-    while(position < pos)
-    {
-        //run_code();
-        //printf("\nposition: %i", position);
-        (*funcs[position])();
-        printf("   	int: %i position: %i colon: %i cel: %i\n", intarray[currentarray], position, lastcolon, currentarray);
-        position++;
-    }
     displayBuffer();
-    printf("\nend of program\n");
+    printf("\nend of program, time: %ld\n", (begin - clock()) / CLOCKS_PER_SEC);
     //free(intarray);
     //free(colon);
     //free(colonClose);
@@ -278,8 +290,8 @@ int colonCloseCount = 0;
 int colondeep = 0;
 void compile (char c)
 {
-    printf("\n%c pos:%i  intcount: %i", c, pos, intcount);
-	printf(" |");
+    //printf("\n%c pos:%i  intcount: %i", c, pos, intcount);
+	//printf(" |");
     if(intcount != 0)
     {
         if(c != '-' && c != '+')
@@ -288,21 +300,21 @@ void compile (char c)
             {
                 while(intcount <= -5)
                 {
-                    printf(" -5");
+                    //printf(" -5");
                     intcount+=5;
                     funcs[pos]=min5;
                     pos++;
                 }
                 while(intcount <= -2)
                 {
-                    printf(" -2");
+                    //printf(" -2");
                     intcount+=2;
                     funcs[pos]=min2;
                     pos++;
                 }
                 while(intcount <= -1)
                 {
-                    printf(" -1");
+                    //printf(" -1");
                     intcount++;
                     funcs[pos]=min1;
                     pos++;
@@ -312,21 +324,21 @@ void compile (char c)
             {
                 while(intcount >= 5)
                 {
-                    printf(" +5");
+                    //printf(" +5");
                     intcount-=5;
                     funcs[pos]=plus5;
                     pos++;
                 }
                 while(intcount >= 2)
                 {
-                    printf(" +2");
+                    //printf(" +2");
                     intcount-=2;
                     funcs[pos]=plus2;
                     pos++;
                 }
                 while(intcount >= 1)
                 {
-                    printf(" +1");
+                    //printf(" +1");
                     intcount--;
                     funcs[pos]=plus1;
                     pos++;
@@ -339,41 +351,42 @@ void compile (char c)
 
     if(c == '>')
     {
-        printf(" move right");
+        //printf(" move right");
         funcs[pos] = moveLeft;
         pos++;
     }
 
     if(c == '<')
     {
-        printf(" move left");
+        //printf(" move left");
         funcs[pos] = moveRight;
         pos++;
     }
 
     if(c == '[')
     {
-        printf(" loop open");
+        //printf(" loop open");
         funcs[pos] = loopOpen;
-        colon[colonCount] = pos;
         colonCount++;
-        printf(" (colon: %i, pos %i)", colonCount, pos);
-        pos++;
+        colon[colonCount] = pos;
+        //printf(" (colon: %i, pos %i)", colonCount, pos);
+        pos+=2;
     }
 
     if(c == ']')
     {
-        printf(" loop close");
+        //printf(" loop close");
         funcs[pos] = loopClose;
-        colonClose[colonCloseCount] = pos;
-        colonCloseCount++;
-        printf(" (colon: %i, pos %i)", colonCount, pos);
-        pos++;
+        funcs[pos+1] = colon[colonCount];
+        funcs[colon[colonCount]+1] = pos;
+        //printf(" (colon: %i, pos %i)", colonCount, pos);
+        colonCount--;
+        pos+= 2;
     }
 
     if(c == '.')
     {
-    	printf(" point");
+    	//printf(" point");
         funcs[pos] = point;
         pos++;
     }
@@ -382,6 +395,7 @@ void compile (char c)
 
 void load_file (char * file)
 {
+    clock_t begin = clock();
     pos = 0;
     FILE *fp;
     fp = fopen(file, "r"); // read mode
@@ -401,14 +415,16 @@ void load_file (char * file)
     while(i < size)
     {
         ch = fgetc(fp);
-        //file_output[i] = ch;
-        compile(ch);
+        if(optimazation == 0) file_output[i] = ch;
+        else compile(ch);
         i++;
     }
     fclose(fp);
-    printf("\ncompiled");
-    //code = file_output;
-    code_length = size;
+    if(optimazation == 1)printf("\ncompiled in %ld", (begin - clock()) / CLOCKS_PER_SEC);
+    else {
+        code = file_output;
+        code_length = size;
+    }
     return;
 }
 
