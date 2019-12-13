@@ -4,13 +4,13 @@
 #include <time.h>
 
 #define MAXINT 1000
-#define MAXCOLON 1000
+#define MAXCOLON 65535
 #define MAXBUFFER 5000
 char * code;
 int code_length = 0;
 
 unsigned char * intarray; //all variables (array)
-int currentarray; //what variable is currently in use
+unsigned short int currentarray; //what variable is currently in use
 int * colon; //what the position is of the last colon (array)
 short int lastcolon = 0;
 short int position = 0;
@@ -19,19 +19,22 @@ short int show_commands = 0;
 short int show_values = 0;
 short int debug = 0;
 short int optimazation = 0;
-
+short int output = 0;
+short int read = 0;
 
 
 unsigned char * buffer;
-int display = 0;
+short int display = 0;
 
-int pos = 0;
+short int pos = 0;
 
-short int funcs[20000];
+int funcs[9000];
 
 void displayBuffer();
 void addtoBuffer(char c);
 void run_code();
+void writeOutput();
+void load_file(char * str);
 
 int main(int argc, char **argv)
 {
@@ -51,12 +54,13 @@ int main(int argc, char **argv)
                 if(argv[i][j] == 's') {show_commands = 1; printf("\nshowing process");}
                 if(argv[i][j] == 'v') {show_values = 1; printf("\nshowing values");}
                 if(argv[i][j] == 'd') {debug = 1; printf("\nDebug mode Active");}
-                if(argv[i][j] == 'o') {optimazation = 1; printf("\nOptimization mode Active");}
-
+                if(argv[i][j] == 'c') {optimazation = 1; printf("\nOptimization mode Active");}
+                if(argv[i][j] == 'o') {output = 1; optimazation = 1; printf("\nOutputting compiled code to: out.obfc");}
+                if(argv[i][j] == 'r') {read = 1; optimazation = 1; printf("\nReading compiled file\n");}
             }
         }
 
-	else {load_file(argv[i]); isempty = 1;}
+        else {load_file(argv[i]); isempty = 1;}
         //if(argv[i] == "-l") {loadfile("./text.txt");}
     }
     if(!isempty) {
@@ -71,14 +75,22 @@ int main(int argc, char **argv)
         free(colon);
     }
     intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
-    buffer = (unsigned char*) calloc(MAXBUFFER, sizeof(unsigned char));
+    buffer = (unsigned char*) calloc(MAXBUFFER+1, sizeof(unsigned char));
 
     //printf("Starting emulation..\n");
+    if(output == 1)
+    {
+        writeOutput();
+        printf("\nWrote file\n");
+        return 0;
+    }
     clock_t begin = clock();
+    position = -1;
     if(optimazation == 1)
         while(position < pos)
         {
             //(*funcs[position])();
+            position++;
             switch(funcs[position])
             {
                 case 0: //add
@@ -89,8 +101,8 @@ int main(int argc, char **argv)
                 case 1: //move
                     position++;
                     currentarray+= funcs[position];
-                    if(currentarray >= MAXCOLON) currentarray -= MAXCOLON;
-                    else if(currentarray < 0) currentarray+= MAXCOLON;
+                    //if(currentarray >= MAXCOLON) currentarray -= MAXCOLON;
+                    //else if(currentarray < 0) currentarray+= MAXCOLON;
                     break;
 
                 case 2: //loop open
@@ -116,14 +128,16 @@ int main(int argc, char **argv)
                     break;
 
                 case 5: //clear
-                    //printf("\npos: %i  cel: %i", position, currentarray);
+                    printf("\npos: %i  cel: %i", position, currentarray);
                     intarray[currentarray] = 0;
                     break;
-
+                default:
+                    printf("\nredundent %i  %i", position, funcs[position]);
+                    break;
             }
             //if(show_commands == 1)
             //printf("   int: %i   position: %i    cel: %i\n", intarray[currentarray], position, currentarray);
-            position++;
+
         }
     else while(position < code_length)
         {
@@ -132,13 +146,36 @@ int main(int argc, char **argv)
         }
 
     displayBuffer();
-    printf("\nend of program, time: %f\n", (double) (begin - clock()) / CLOCKS_PER_SEC);
+    printf("\nend of program, time: %f\n", (double) (clock() - begin) / CLOCKS_PER_SEC);
     //free(intarray);
     //free(colon);
     //free(colonClose);
     //free(buffer);
     //printf("type anything to continue");
     return 0;
+}
+
+void writeOutput()
+{
+    FILE * fp;
+    /* open the file for writing*/
+    fp = fopen ("output.obfc","wb");
+
+    int results = 0;
+    /*
+    for(int i = 0; i < pos; i++)
+    {
+        results = fprintf(fp, "%c", funcs[i]);
+    }
+    */
+    fwrite(funcs,pos,1,fp);
+    if (results == EOF) {
+        printf("\nFailed, to write file");
+        // Failed to write do error code here.
+    }
+    /* close the file*/
+    fclose (fp);
+    return;
 }
 
 
@@ -225,7 +262,7 @@ void addtoBuffer (char c)
 {
     buffer[display] = c;
     display++;
-    if(MAXBUFFER - 1 < display) displayBuffer();
+    if(MAXBUFFER < display) displayBuffer();
 }
 
 void displayBuffer()
@@ -304,7 +341,6 @@ void compile (char c)
         funcs[pos] = 3;
         funcs[pos+1] = colon[colonCount];
         funcs[colon[colonCount]+1] = pos;
-        //printf(" (colon: %i, pos %i)", colonCount, pos);
         colonCount--;
         pos+= 2;
     }
@@ -340,16 +376,26 @@ void load_file (char * file)
     while(i < size)
     {
         ch = fgetc(fp);
-        if(optimazation == 0) file_output[i] = ch;
-        else compile(ch);
+        if(read == 1)
+        {
+            printf(" %i ", ch);
+            funcs[i] = ch;
+        } else {
+            if(optimazation == 0) file_output[i] = ch;
+            else compile(ch);
+        }
         i++;
     }
     fclose(fp);
-    if(optimazation == 1)printf("\ncompiled in %ld", (begin - clock()) / CLOCKS_PER_SEC);
+    if(optimazation == 1 && read == 0)
+    {
+        printf("\ncompiled in %f", (double) (clock() - begin) / CLOCKS_PER_SEC);
+    }
     else {
         code = file_output;
         code_length = size;
     }
+    if(read == 1) pos = size;
     return;
 }
 
