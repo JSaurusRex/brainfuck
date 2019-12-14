@@ -3,9 +3,9 @@
 #include <string.h>
 #include <time.h>
 
-#define MAXINT 1000
+#define MAXINT 65535
 #define MAXCOLON 65535
-#define MAXBUFFER 5000
+#define MAXBUFFER 15000
 char * code;
 int code_length = 0;
 
@@ -101,13 +101,10 @@ int main(int argc, char **argv)
                 case 1: //move
                     position++;
                     currentarray+= funcs[position];
-                    //if(currentarray >= MAXCOLON) currentarray -= MAXCOLON;
-                    //else if(currentarray < 0) currentarray+= MAXCOLON;
                     break;
 
                 case 2: //loop open
                     position++;
-                    //printf("loopO ");
                     if(intarray[currentarray] == 0)
                     {
                         position = funcs[position];
@@ -116,7 +113,6 @@ int main(int argc, char **argv)
 
                 case 3: //loop close
                     position++;
-                    //printf("loopC ");
                     if(intarray[currentarray] != 0)
                     {
                         position = funcs[position];
@@ -124,19 +120,15 @@ int main(int argc, char **argv)
                     break;
 
                 case 4: //point
-                    addtoBuffer(intarray[currentarray]);
+                    buffer[display] = intarray[currentarray];
+				    display++;
+				    if(MAXBUFFER < display) displayBuffer();
                     break;
 
                 case 5: //clear
-                    printf("\npos: %i  cel: %i", position, currentarray);
                     intarray[currentarray] = 0;
                     break;
-                default:
-                    printf("\nredundent %i  %i", position, funcs[position]);
-                    break;
             }
-            //if(show_commands == 1)
-            //printf("   int: %i   position: %i    cel: %i\n", intarray[currentarray], position, currentarray);
 
         }
     else while(position < code_length)
@@ -277,8 +269,6 @@ int intcount = 0;
 int movecount = 0;
 
 int colonCount= 0;
-int colonCloseCount = 0;
-int colondeep = 0;
 char lastchar[3];
 void compile (char c)
 {
@@ -295,6 +285,8 @@ void compile (char c)
         funcs[pos] = 5;
         pos++;
         intcount = 0;
+        colonCount--;
+        return;
     }
     if(intcount != 0)
     {
@@ -307,8 +299,6 @@ void compile (char c)
             pos++;
         }
     }
-    if(c == '+') intcount++;
-    if(c == '-') intcount--;
 
     if(movecount != 0)
     {
@@ -322,34 +312,42 @@ void compile (char c)
         }
     }
 
-    if(c == '>') movecount++;
-    if(c == '<') movecount--;
-
-    if(c == '[')
+    switch(c)
     {
-        //printf(" loop open");
-        funcs[pos] = 2;
-        colonCount++;
-        colon[colonCount] = pos;
-        //printf(" (colon: %i, pos %i)", colonCount, pos);
-        pos+=2;
-    }
 
-    if(c == ']')
-    {
-        //printf(" loop close");
-        funcs[pos] = 3;
-        funcs[pos+1] = colon[colonCount];
-        funcs[colon[colonCount]+1] = pos;
-        colonCount--;
-        pos+= 2;
-    }
+	    case '+':
+	    	intcount++;
+	    	break;
+	    case '-':
+	    	intcount--;
+	    	break;
 
-    if(c == '.')
-    {
-    	//printf(" point");
-        funcs[pos] = 4;
-        pos++;
+	    case '>':
+	    	movecount++;
+	    	break;
+	    case '<':
+	    	movecount--;
+	    	break;
+
+	    case '[':
+	        funcs[pos] = 2;
+	        colonCount++;
+	        colon[colonCount] = pos;
+	        pos+=2;
+			break;
+
+	    case ']':
+	        funcs[pos] = 3;
+	        funcs[pos+1] = colon[colonCount] +1;
+	        funcs[colon[colonCount]+1] = pos+1;
+	        colonCount--;
+	        pos+= 2;
+	        break;
+
+	    case '.':
+	        funcs[pos] = 4;
+	        pos++;
+	        break;
     }
 
 }
