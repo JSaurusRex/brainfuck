@@ -65,8 +65,9 @@ int main(int argc, char **argv)
     }
     if(!isempty) {
         printf("error: no file specified\n");
-        //load_file("helloworld.txt");
-        return 0;
+        optimazation = 1;
+        load_file("helloworld.txt");
+        //return 0;
     }
     if(optimazation == 0)printf("\n length: %i\n", code_length);
     else
@@ -120,9 +121,7 @@ int main(int argc, char **argv)
                     break;
 
                 case 4: //point
-                    buffer[display] = intarray[currentarray];
-				    display++;
-				    if(MAXBUFFER < display) displayBuffer();
+                    addtoBuffer(intarray[currentarray]);
                     break;
 
                 case 5: //clear
@@ -144,6 +143,7 @@ int main(int argc, char **argv)
     //free(colonClose);
     //free(buffer);
     //printf("type anything to continue");
+    scanf("%i", optimazation);
     return 0;
 }
 

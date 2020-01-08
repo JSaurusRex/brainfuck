@@ -25,11 +25,13 @@
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-flto" />
 					<Add option="-m64" />
-					<Add option="-g0 -O2" />
+					<Add option="-Ofast" />
 				</Compiler>
 				<Linker>
 					<Add option="-flto" />
 					<Add option="-s" />
+					<Add option="-static-libgcc" />
+					<Add option="-static" />
 					<Add option="-m64" />
 				</Linker>
 			</Target>
