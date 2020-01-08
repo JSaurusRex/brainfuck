@@ -92,6 +92,7 @@ int main(int argc, char **argv)
             //(*funcs[position])();
             //position++;
             //addtoBuffer('0' funcs[position]);
+            //printf("%i", funcs[position]);
             switch(funcs[position])
             {
                 case 0: //add
@@ -370,6 +371,13 @@ void compile (char c)
 	    	break;
 
 	    case '[':
+	        if(funcs[pos -2] == 2)
+            {
+                printf("\n dubble [[");
+                colonCount++;
+                colon[colonCount] = pos - 2;
+                return;
+            }
 	        funcs[pos] = 2;
 	        colonCount++;
 	        colon[colonCount] = pos;
@@ -377,6 +385,12 @@ void compile (char c)
 			break;
 
 	    case ']':
+	        if(funcs[pos -2] == 3 )
+            {
+                printf("\n dubble ]]");
+                colonCount--;
+                return;
+            }
 	        funcs[pos] = 3;
 	        funcs[pos+1] = colon[colonCount] +1;
 	        funcs[colon[colonCount]+1] = pos+1;
