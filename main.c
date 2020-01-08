@@ -87,10 +87,11 @@ int main(int argc, char **argv)
     clock_t begin = clock();
     position = -1;
     if(optimazation == 1)
-        while(position < pos)
+        while(position++ < pos)
         {
             //(*funcs[position])();
-            position++;
+            //position++;
+            //addtoBuffer('0' funcs[position]);
             switch(funcs[position])
             {
                 case 0: //add
@@ -123,10 +124,19 @@ int main(int argc, char **argv)
                     buffer[display] = intarray[currentarray];
 				    display++;
 				    if(MAXBUFFER < display) displayBuffer();
+				    position++;
                     break;
 
                 case 5: //clear
                     intarray[currentarray] = 0;
+                    position++;
+                    break;
+                case 6: //move loop
+                    position++;
+                    while( intarray[currentarray] != 0)
+                    {
+                        currentarray += funcs[position];
+                    }
                     break;
             }
 
@@ -266,66 +276,96 @@ void displayBuffer()
 }
 
 int intcount = 0;
+int intstate = 0;
 int movecount = 0;
+int movestate = 0;
 
 int colonCount= 0;
-char lastchar[3];
 void compile (char c)
 {
-    lastchar[2] = lastchar[1];
-    lastchar[1] = lastchar[0];
-    lastchar[0] = c;
 
-
-
-
-    if(lastchar[2] == '[' && lastchar[1] == '-'&& c == ']')
+    if(intstate == 1) //+ / -
     {
-        pos-= 2;
-        funcs[pos] = 5;
-        pos++;
-        intcount = 0;
-        colonCount--;
-        return;
-    }
-    if(intcount != 0)
-    {
-        if(c != '-' && c != '+')
+        if(c == '<' || c == '>' || c == '.' || c == '[' || c == ']')
         {
-            funcs[pos] = 0;
-            pos++;
-            funcs[pos] = intcount;
-            intcount = 0;
-            pos++;
-        }
-    }
+            if(intcount == 0)
+            {
 
-    if(movecount != 0)
-    {
-        if(c != '<' && c != '>')
-        {
-            funcs[pos] = 1;
-            pos++;
-            funcs[pos] = movecount;
-            movecount = 0;
-            pos++;
+            } else {
+                if(c == ']' && funcs[pos - 2] == 2)
+                {
+                    //printf("\nclear");
+                    pos-= 2;
+                    funcs[pos] = 5;
+                    pos+=2;
+                    intcount = 0;
+                    intstate = 0;
+                    colonCount--;
+                    return;
+                }
+                funcs[pos] = 0;
+                pos++;
+                funcs[pos] = intcount;
+                intcount = 0;
+                intstate = 0;
+                pos++;
+            }
         }
-    }
+    } else intcount = 0;
+
+    if(movestate == 1) // > / <
+    {
+        if(c == '+' || c == '-' || c == '.' || c == '[' || c == ']')
+        {
+            if(movecount == 0)
+            {
+                movestate = 0;
+            }else
+            {
+                //printf("\n");
+                //for(int i = -4; i < 0; i++)
+                //    printf("%i ", funcs[pos+i]);
+                if(c == ']' && funcs[pos - 2] == 2)
+                {
+                    //printf("  move loop");
+                    pos -= 2;
+                    funcs[pos] = 6;
+                    funcs[pos+1] = movecount;
+                    pos+= 2;
+
+                    movecount = 0;
+                    movestate = 0;
+                    colonCount--;
+                    return;
+                }
+                funcs[pos] = 1;
+                pos++;
+                funcs[pos] = movecount;
+                movecount = 0;
+                movestate = 0;
+                pos++;
+            }
+        }
+    }else movecount=0;
 
     switch(c)
     {
 
 	    case '+':
+	        intstate = 1;
 	    	intcount++;
 	    	break;
 	    case '-':
+	        intstate = 1;
 	    	intcount--;
 	    	break;
 
 	    case '>':
+	        movestate = 1;
 	    	movecount++;
 	    	break;
 	    case '<':
+	        movestate = 1;
 	    	movecount--;
 	    	break;
 
@@ -346,7 +386,7 @@ void compile (char c)
 
 	    case '.':
 	        funcs[pos] = 4;
-	        pos++;
+	        pos+=2;
 	        break;
     }
 
