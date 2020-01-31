@@ -1,4 +1,4 @@
-"# brainfuck" 
+BRAINFUCK - JSaurusRex
 
 for linux users, you can use the brainfuck executable by typing ./brainfuck file.txt
 
