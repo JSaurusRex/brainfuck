@@ -13,9 +13,9 @@ brainfuck program.bf
   
 brainfuck -c program.bf
 
-  #this first compiles the prorgam to a more compact version of brainfuck and then runs it.
+  this first compiles the prorgam to a more compact version of brainfuck and then runs it.
   
   example of compiling: >>>> becomes 14 | 1 (move) 4 (how far to move)
   -- becomes 0-2 | 0(add)-2(amount to add)
   
-  -c does not execute , so you will have to run programs using one without the -c option
+  -c does not always run perfectly, it is still under development. if a program doens't work with it you will have to run programs without the -c option
