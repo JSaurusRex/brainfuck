@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1578493859 source:d:\desktop\c++\brainfuck\main.c
+1583159405 source:d:\desktop\c++\brainfuck\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>

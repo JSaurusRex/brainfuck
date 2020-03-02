@@ -5,7 +5,7 @@
 
 #define MAXINT 65535
 #define MAXCOLON 65535
-#define MAXBUFFER 15000
+#define MAXBUFFER 1
 char * code;
 int code_length = 0;
 
@@ -26,15 +26,16 @@ short int read = 0;
 unsigned char * buffer;
 short int display = 0;
 
-short int pos = 0;
+int pos = 0;
 
-int funcs[9000];
+int  * funcs;
 
 void displayBuffer();
 void addtoBuffer(char c);
 void run_code();
 void writeOutput();
 void load_file(char * str);
+void runJIT ();
 
 int main(int argc, char **argv)
 {
@@ -42,6 +43,8 @@ int main(int argc, char **argv)
 
     //checks arguments
     int isempty = 0;
+
+    funcs = (int*) calloc(10000, sizeof(int));
 
     for (int i = 1  ; i < argc; ++i)
     {
@@ -69,14 +72,16 @@ int main(int argc, char **argv)
         load_file("helloworld.txt");
         //return 0;
     }
-    if(optimazation == 0)printf("\n length: %i\n", code_length);
+    if(optimazation == 0) printf("\n length: %i\n", code_length);
     else
     {
         printf("\n length: %i\n", pos);
         free(colon);
     }
+
     intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
     buffer = (unsigned char*) calloc(MAXBUFFER+1, sizeof(unsigned char));
+    printf("starting!");
 
     //printf("Starting emulation..\n");
     if(output == 1)
@@ -88,61 +93,7 @@ int main(int argc, char **argv)
     clock_t begin = clock();
     position = -1;
     if(optimazation == 1)
-        while(position++ < pos)
-        {
-            //(*funcs[position])();
-            //position++;
-            //addtoBuffer('0' funcs[position]);
-            //printf("%i", funcs[position]);
-            switch(funcs[position])
-            {
-                case 0: //add
-                    position++;
-                    intarray[currentarray] += funcs[position];
-                    break;
-
-                case 1: //move
-                    position++;
-                    currentarray+= funcs[position];
-                    break;
-
-                case 2: //loop open
-                    position++;
-                    if(intarray[currentarray] == 0)
-                    {
-                        position = funcs[position];
-                    }
-                    break;
-
-                case 3: //loop close
-                    position++;
-                    if(intarray[currentarray] != 0)
-                    {
-                        position = funcs[position];
-                    }
-                    break;
-
-                case 4: //point
-                    buffer[display] = intarray[currentarray];
-				    display++;
-				    if(MAXBUFFER < display) displayBuffer();
-				    position++;
-                    break;
-
-                case 5: //clear
-                    intarray[currentarray] = 0;
-                    position++;
-                    break;
-                case 6: //move loop
-                    position++;
-                    while( intarray[currentarray] != 0)
-                    {
-                        currentarray += funcs[position];
-                    }
-                    break;
-            }
-
-        }
+        runJIT();
     else while(position < code_length)
         {
             run_code();
@@ -181,6 +132,73 @@ void writeOutput()
     /* close the file*/
     fclose (fp);
     return;
+}
+
+void runJIT ()
+{
+    //printf("come here\n");
+    unsigned char * currentcell = intarray;
+    int size = sizeof(int);
+    int * currentfunc = funcs - 1;
+    pos += funcs;
+    while(currentfunc++ < pos)
+        {
+
+            //(*funcs[position])();
+            //position++;
+            //addtoBuffer('0' funcs[position]);
+            //printf("func: %i, cell: %i, position: %i \n", *currentfunc, *currentcell, currentfunc - funcs);
+
+            switch(*currentfunc)
+            {
+                case 0: //add
+                    currentfunc++;
+                    *currentcell += *currentfunc;
+                    break;
+
+                case 1: //move
+                    currentfunc++;
+                    //currentarray+= funcs[position];
+                    currentcell +=*currentfunc;
+                    break;
+
+                case 2: //loop open
+                    currentfunc++;
+                    if(*currentcell == 0)
+                    {
+                        currentfunc = funcs + *currentfunc;
+                    }
+                    break;
+
+                case 3: //loop close
+                    currentfunc++;
+                    if(*currentcell != 0)
+                    {
+                        currentfunc = funcs + *currentfunc;
+                    }
+                    break;
+
+                case 4: //point
+                    buffer[display] = *currentcell;
+                    display++;
+                    if(MAXBUFFER < display) displayBuffer();
+                    currentfunc++;
+                    break;
+
+                case 5: //clear
+                    *currentcell = 0;
+                    currentfunc++;
+                    break;
+                case 6: //move loop
+                    currentfunc++;
+                    while( *currentcell != 0)
+                    {
+                        currentarray += *currentfunc;
+                    }
+                    break;
+            }
+
+        }
 }
 
 
@@ -286,26 +304,28 @@ int movestate = 0;
 int colonCount= 0;
 void compile (char c)
 {
+    printf("\ncompiling %c, %i ints: %i moves: %i ", c, pos, intcount, movecount);
 
     if(intstate == 1) //+ / -
     {
         if(c == '<' || c == '>' || c == '.' || c == '[' || c == ']')
         {
+            printf("ADD");
             if(intcount == 0)
             {
 
             } else {
-                if(c == ']' && funcs[pos - 2] == 2)
-                {
-                    //printf("\nclear");
-                    pos-= 2;
-                    funcs[pos] = 5;
-                    pos+=2;
-                    intcount = 0;
-                    intstate = 0;
-                    colonCount--;
-                    return;
-                }
+                if(c == ']' && pos > 1)
+                    if(funcs[pos - 2] == 2)
+                    {
+                        pos-= 2;
+                        funcs[pos] = 5;
+                        pos+=2;
+                        intcount = 0;
+                        intstate = 0;
+                        colonCount--;
+                        return;
+                    }
                 funcs[pos] = 0;
                 pos++;
                 funcs[pos] = intcount;
@@ -320,6 +340,7 @@ void compile (char c)
     {
         if(c == '+' || c == '-' || c == '.' || c == '[' || c == ']')
         {
+            printf("MOVE");
             if(movecount == 0)
             {
                 movestate = 0;
@@ -328,19 +349,22 @@ void compile (char c)
                 //printf("\n");
                 //for(int i = -4; i < 0; i++)
                 //    printf("%i ", funcs[pos+i]);
-                if(c == ']' && funcs[pos - 2] == 2)
-                {
-                    //printf("  move loop");
-                    pos -= 2;
-                    funcs[pos] = 6;
-                    funcs[pos+1] = movecount;
-                    pos+= 2;
+                /*
+                if(c == ']' && pos > 1)
+                    if(funcs[pos - 2] == 2)
+                    {
+                        //printf("  move loop");
+                        pos -= 2;
+                        funcs[pos] = 6;
+                        funcs[pos+1] = movecount;
+                        pos+= 2;
 
-                    movecount = 0;
-                    movestate = 0;
-                    colonCount--;
-                    return;
-                }
+                        movecount = 0;
+                        movestate = 0;
+                        colonCount--;
+                        return;
+                    }
+                    */
                 funcs[pos] = 1;
                 pos++;
                 funcs[pos] = movecount;
@@ -350,6 +374,8 @@ void compile (char c)
             }
         }
     }else movecount=0;
+
+
 
     switch(c)
     {
@@ -373,31 +399,36 @@ void compile (char c)
 	    	break;
 
 	    case '[':
-	        if(funcs[pos -2] == 2 && 1 == 0)
+	        /*if(funcs[pos -2] == 2 && 1 == 0)
             {
                 printf("\n dubble [[");
                 colonCount++;
                 colon[colonCount] = pos - 2;
                 return;
-            }
+            }*/
+            printf("   made it!");
 	        funcs[pos] = 2;
+	        printf("   made it!");
 	        colonCount++;
 	        colon[colonCount] = pos;
+	        printf("   made it!");
 	        pos+=2;
 			break;
 
 	    case ']':
-	        if(funcs[pos -2] == 3 && 1 == 0)
+	        /*if(funcs[pos -2] == 3 && 1 == 0)
             {
                 printf("\n dubble ]]");
                 colonCount--;
                 return;
-            }
+            }*/
+
 	        funcs[pos] = 3;
-	        funcs[pos+1] = colon[colonCount] +1;
-	        funcs[colon[colonCount]+1] = pos+1;
+	        pos++;
+	        funcs[pos] = colon[colonCount] +1;
+	        funcs[colon[colonCount]+1] = pos;
 	        colonCount--;
-	        pos+= 2;
+	        pos++;
 	        break;
 
 	    case '.':
