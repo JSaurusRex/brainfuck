@@ -6,6 +6,8 @@
 #define MAXINT 65535
 #define MAXCOLON 65535
 #define MAXBUFFER 1
+
+typedef void (*Exec) ();
 char * code;
 int code_length = 0;
 
@@ -28,7 +30,9 @@ short int display = 0;
 
 int pos = 0;
 
-int  * funcs;
+//void *((*funcs)());
+//Exec  funcs;
+void (*funcs[10000])();
 
 void displayBuffer();
 void addtoBuffer(char c);
@@ -36,6 +40,7 @@ void run_code();
 void writeOutput();
 void load_file(char * str);
 void runJIT ();
+//Exec * Funcs;
 
 int main(int argc, char **argv)
 {
@@ -44,7 +49,9 @@ int main(int argc, char **argv)
     //checks arguments
     int isempty = 0;
 
-    funcs = (int*) calloc(10000, sizeof(int));
+    //funcs = (int*) calloc(10000, sizeof(int));
+
+
 
     for (int i = 1  ; i < argc; ++i)
     {
@@ -57,7 +64,7 @@ int main(int argc, char **argv)
                 if(argv[i][j] == 's') {show_commands = 1; printf("\nshowing process");}
                 if(argv[i][j] == 'v') {show_values = 1; printf("\nshowing values");}
                 if(argv[i][j] == 'd') {debug = 1; printf("\nDebug mode Active");}
-                if(argv[i][j] == 'c') {optimazation = 1; printf("\nOptimization mode Active");}
+                if(argv[i][j] == 'c') {optimazation = 1; }//printf("\nOptimization mode Active");}
                 if(argv[i][j] == 'o') {output = 1; optimazation = 1; printf("\nOutputting compiled code to: out.obfc");}
                 if(argv[i][j] == 'r') {read = 1; optimazation = 1; printf("\nReading compiled file\n");}
             }
@@ -75,13 +82,13 @@ int main(int argc, char **argv)
     if(optimazation == 0) printf("\n length: %i\n", code_length);
     else
     {
-        printf("\n length: %i\n", pos);
+        //printf("\n length: %i\n", pos);
         free(colon);
     }
 
     intarray = (unsigned char*) calloc(MAXINT, sizeof(unsigned char));
     buffer = (unsigned char*) calloc(MAXBUFFER+1, sizeof(unsigned char));
-    printf("starting!");
+    //printf("starting!");
 
     //printf("Starting emulation..\n");
     if(output == 1)
@@ -99,15 +106,14 @@ int main(int argc, char **argv)
             run_code();
             position++;
         }
-
+    //printf("\nend of program, time: %f\n", (double) (clock() - begin) / CLOCKS_PER_SEC);
     displayBuffer();
-    printf("\nend of program, time: %f\n", (double) (clock() - begin) / CLOCKS_PER_SEC);
     //free(intarray);
     //free(colon);
     //free(colonClose);
     //free(buffer);
     //printf("type anything to continue");
-    scanf("%i", optimazation);
+    //scanf("%i", optimazation);
     return 0;
 }
 
@@ -134,17 +140,90 @@ void writeOutput()
     return;
 }
 
+void (*currentfunc)();
+unsigned char * currentcell;
+
+void add () {
+    currentfunc++;
+    *currentcell += (unsigned char) *currentfunc;
+    (**currentfunc)();
+}
+
+void move () {
+    currentfunc++;
+    currentcell += (unsigned char) *currentfunc;
+    (**currentfunc)();
+}
+
+void loopOpen ()
+{
+    currentfunc++;
+    if(*currentcell == 0)
+    {
+        currentfunc = *currentfunc;
+    }
+    (**currentfunc)();
+}
+
+void loopClose ()
+{
+    currentfunc++;
+    if(*currentcell != 0)
+    {
+        currentfunc = *currentfunc;
+    }
+    (**currentfunc)();
+}
+
+void point ()
+{
+    buffer[display] = *currentcell;
+    display++;
+    //*currentbuff = *currentcell;
+    //currentbuff++;
+    if(MAXBUFFER < display) displayBuffer();
+    currentfunc++;
+    (**currentfunc)();
+}
+
+void clear()
+{
+    *currentcell = 0;
+    currentfunc++;
+    (**currentfunc)();
+}
+
+void moveLoop ()
+{
+    currentfunc++;
+    while( *currentcell != 0)
+    {
+        currentcell += (unsigned char)*currentfunc;
+    }
+    (**currentfunc)();
+}
+
 void runJIT ()
 {
-    //printf("come here\n");
+    printf("come here\n");
     unsigned char * currentcell = intarray;
-    int size = sizeof(int);
-    int * currentfunc = funcs - 1;
-    pos += funcs;
-    while(currentfunc++ < pos)
+    unsigned char * currentbuff = buffer;
+    currentfunc = *funcs;
+    //int *
+    //currentfunc = funcs - 1;
+    int * postmp = pos + funcs;
+    int tmp1 = add;
+    int tmp2 = funcs[0];
+    int tmp3 = currentfunc;
+    printf("add: %i\nfunc: %i\ncurrentfunc: %i", tmp1, tmp2, tmp3);
+    if(funcs[1] == move) printf("everything is correct");
+    //(**currentfunc)();
+    (**currentfunc)();
+    /*
+    while(currentfunc++ < postmp)
         {
 
-            //(*funcs[position])();
+            //(**currentfunc)();
             //position++;
             //addtoBuffer('0' funcs[position]);
             //printf("func: %i, cell: %i, position: %i \n", *currentfunc, *currentcell, currentfunc - funcs);
@@ -159,14 +238,15 @@ void runJIT ()
                 case 1: //move
                     currentfunc++;
                     //currentarray+= funcs[position];
-                    currentcell +=*currentfunc;
+                    currentcell += *currentfunc;
+                    //if(currentcell < intarray) currentcell = intarray + MAXINT;
                     break;
 
                 case 2: //loop open
                     currentfunc++;
                     if(*currentcell == 0)
                     {
-                        currentfunc = funcs + *currentfunc;
+                        currentfunc = *currentfunc;
                     }
                     break;
 
@@ -174,13 +254,15 @@ void runJIT ()
                     currentfunc++;
                     if(*currentcell != 0)
                     {
-                        currentfunc = funcs + *currentfunc;
+                        currentfunc = *currentfunc;
                     }
                     break;
 
                 case 4: //point
                     buffer[display] = *currentcell;
                     display++;
+                    //*currentbuff = *currentcell;
+                    //currentbuff++;
                     if(MAXBUFFER < display) displayBuffer();
                     currentfunc++;
                     break;
@@ -193,12 +275,15 @@ void runJIT ()
                     currentfunc++;
                     while( *currentcell != 0)
                     {
-                        currentarray += *currentfunc;
+                        currentcell += *currentfunc;
                     }
                     break;
             }
 
         }
+        //display = currentbuff - buffer;
+        */
+
 }
 
 
@@ -304,13 +389,12 @@ int movestate = 0;
 int colonCount= 0;
 void compile (char c)
 {
-    printf("\ncompiling %c, %i ints: %i moves: %i ", c, pos, intcount, movecount);
+    //printf("\ncompiling %c, %i ints: %i moves: %i ", c, pos, intcount, movecount);
 
     if(intstate == 1) //+ / -
     {
         if(c == '<' || c == '>' || c == '.' || c == '[' || c == ']')
         {
-            printf("ADD");
             if(intcount == 0)
             {
 
@@ -326,9 +410,10 @@ void compile (char c)
                         colonCount--;
                         return;
                     }
-                funcs[pos] = 0;
+                funcs[pos] = &add;
                 pos++;
                 funcs[pos] = intcount;
+                //printf("\n pos: %i  funcs: %i, add: %i", pos, (int) funcs[pos-1], &add);
                 intcount = 0;
                 intstate = 0;
                 pos++;
@@ -340,7 +425,6 @@ void compile (char c)
     {
         if(c == '+' || c == '-' || c == '.' || c == '[' || c == ']')
         {
-            printf("MOVE");
             if(movecount == 0)
             {
                 movestate = 0;
@@ -349,13 +433,13 @@ void compile (char c)
                 //printf("\n");
                 //for(int i = -4; i < 0; i++)
                 //    printf("%i ", funcs[pos+i]);
-                /*
+
                 if(c == ']' && pos > 1)
                     if(funcs[pos - 2] == 2)
                     {
                         //printf("  move loop");
                         pos -= 2;
-                        funcs[pos] = 6;
+                        funcs[pos] = &moveLoop;
                         funcs[pos+1] = movecount;
                         pos+= 2;
 
@@ -364,8 +448,9 @@ void compile (char c)
                         colonCount--;
                         return;
                     }
-                    */
-                funcs[pos] = 1;
+
+                funcs[pos] = &move;
+
                 pos++;
                 funcs[pos] = movecount;
                 movecount = 0;
@@ -399,40 +484,38 @@ void compile (char c)
 	    	break;
 
 	    case '[':
-	        /*if(funcs[pos -2] == 2 && 1 == 0)
+	        if(funcs[pos -2] == 2 && 1 == 0)
             {
                 printf("\n dubble [[");
                 colonCount++;
                 colon[colonCount] = pos - 2;
                 return;
-            }*/
-            printf("   made it!");
-	        funcs[pos] = 2;
-	        printf("   made it!");
+            }
+	        funcs[pos] = &loopOpen;
+	        //printf("\n pos: %i  funcs: %i, loopOpen: %i", pos, (int) funcs[pos], &loopOpen);
 	        colonCount++;
 	        colon[colonCount] = pos;
-	        printf("   made it!");
 	        pos+=2;
 			break;
 
 	    case ']':
-	        /*if(funcs[pos -2] == 3 && 1 == 0)
+	        if(funcs[pos -2] == 3 && 1 == 0)
             {
                 printf("\n dubble ]]");
                 colonCount--;
                 return;
-            }*/
+            }
 
-	        funcs[pos] = 3;
+	        funcs[pos] = &loopClose;
 	        pos++;
-	        funcs[pos] = colon[colonCount] +1;
-	        funcs[colon[colonCount]+1] = pos;
+	        funcs[pos] = colon[colonCount] +1 + funcs;
+	        funcs[colon[colonCount]+1] = pos + funcs;
 	        colonCount--;
 	        pos++;
 	        break;
 
 	    case '.':
-	        funcs[pos] = 4;
+	        funcs[pos] = &point;
 	        pos+=2;
 	        break;
     }
@@ -474,7 +557,7 @@ void load_file (char * file)
     fclose(fp);
     if(optimazation == 1 && read == 0)
     {
-        printf("\ncompiled in %f", (double) (clock() - begin) / CLOCKS_PER_SEC);
+        //printf("\ncompiled in %f", (double) (clock() - begin) / CLOCKS_PER_SEC);
     }
     else {
         code = file_output;
