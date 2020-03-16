@@ -5,9 +5,17 @@
 	<string.h>
 	<time.h>
 
+1578477418 
+
 1557745930 d:\desktop\c++\brainfuck\functions.h
 
 1578477418 source:c:\users\jesse\desktop\brainfuck\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+
+1584370570 source:/home/jesse/c++/brainfuck/main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
