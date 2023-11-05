@@ -64,7 +64,7 @@ int main(int argc, char **argv)
                 if(argv[i][j] == 's') {show_commands = 1; printf("\nshowing process");}
                 if(argv[i][j] == 'v') {show_values = 1; printf("\nshowing values");}
                 if(argv[i][j] == 'd') {debug = 1; printf("\nDebug mode Active");}
-                if(argv[i][j] == 'c') {optimazation = 1; }//printf("\nOptimization mode Active");}
+                if(argv[i][j] == 'c') {optimazation = 1; printf("\nOptimization mode Active");}
                 if(argv[i][j] == 'o') {output = 1; optimazation = 1; printf("\nOutputting compiled code to: out.obfc");}
                 if(argv[i][j] == 'r') {read = 1; optimazation = 1; printf("\nReading compiled file\n");}
             }
@@ -140,85 +140,109 @@ void writeOutput()
     return;
 }
 
-void (*currentfunc)();
+void (**currentfunc)();
 unsigned char * currentcell;
+unsigned char * currentbuff;
+
+// #define DEBUG
 
 void add () {
     currentfunc++;
+    #ifdef DEBUG
+        printf("add %i\n", *currentfunc);
+    #endif
     *currentcell += (unsigned char) *currentfunc;
-    (**currentfunc)();
+    currentfunc++;
 }
 
 void move () {
     currentfunc++;
-    currentcell += (unsigned char) *currentfunc;
-    (**currentfunc)();
+    #ifdef DEBUG
+        printf("move %i\n", *currentfunc);
+    #endif
+    currentcell += (signed char) *currentfunc;
+    currentfunc++;
 }
 
 void loopOpen ()
 {
+    #ifdef DEBUG
+        printf("[ %i\n", *currentcell);
+    #endif
     currentfunc++;
     if(*currentcell == 0)
     {
         currentfunc = *currentfunc;
     }
-    (**currentfunc)();
+    currentfunc++;
 }
 
 void loopClose ()
 {
     currentfunc++;
+    #ifdef DEBUG
+        printf("] %i\n", *currentcell);
+    #endif
     if(*currentcell != 0)
     {
         currentfunc = *currentfunc;
     }
-    (**currentfunc)();
+    currentfunc++;
 }
 
 void point ()
 {
+    #ifdef DEBUG
+        printf("print %c\t %i\n", *currentcell, *currentcell);
+    #endif
     buffer[display] = *currentcell;
     display++;
     //*currentbuff = *currentcell;
     //currentbuff++;
     if(MAXBUFFER < display) displayBuffer();
     currentfunc++;
-    (**currentfunc)();
 }
 
 void clear()
 {
+    #ifdef DEBUG
+        printf("clear %i\n", currentcell-currentarray);
+    #endif
     *currentcell = 0;
     currentfunc++;
-    (**currentfunc)();
 }
 
 void moveLoop ()
 {
+    #ifdef DEBUG
+        printf("[>] %i\n", *currentcell);
+    #endif
     currentfunc++;
     while( *currentcell != 0)
     {
         currentcell += (unsigned char)*currentfunc;
     }
-    (**currentfunc)();
 }
 
 void runJIT ()
 {
     printf("come here\n");
-    unsigned char * currentcell = intarray;
-    unsigned char * currentbuff = buffer;
-    currentfunc = *funcs;
+    currentcell = intarray;
+    currentbuff = buffer;
+    currentfunc = funcs;
     //int *
     //currentfunc = funcs - 1;
     int * postmp = pos + funcs;
-    int tmp1 = add;
-    int tmp2 = funcs[0];
-    int tmp3 = currentfunc;
-    printf("add: %i\nfunc: %i\ncurrentfunc: %i", tmp1, tmp2, tmp3);
-    if(funcs[1] == move) printf("everything is correct");
+    
     //(**currentfunc)();
-    (**currentfunc)();
+    while(**currentfunc)
+    {
+        #ifdef DEBUG
+            printf("func: %d\t %d\n", currentfunc-funcs, **currentfunc);
+        #endif
+        (**currentfunc)();
+    }
+    displayBuffer();
     /*
     while(currentfunc++ < postmp)
         {
@@ -516,7 +540,7 @@ void compile (char c)
 
 	    case '.':
 	        funcs[pos] = &point;
-	        pos+=2;
+	        pos++;
 	        break;
     }
 
@@ -553,6 +577,10 @@ void load_file (char * file)
             else compile(ch);
         }
         i++;
+    }
+    if(optimazation)
+    {
+        funcs[pos] = 0;
     }
     fclose(fp);
     if(optimazation == 1 && read == 0)
