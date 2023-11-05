@@ -49,11 +49,10 @@ enum {eAdd, eMove, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit};
 // #define DEBUG
 // #define COUNT
 
-void runJIT ()
+ __attribute__((hot)) void runJIT ()
 {
     unsigned char intarray[MAXINT]; //all variables (array)
     unsigned char buffer[MAXBUFFER];
-    short int display = 0;
     register void **currentfunc = funcs;
     unsigned char * currentcell = intarray;
     unsigned char * currentbuff = buffer;
@@ -163,10 +162,6 @@ void runJIT ()
         {
             currentfunc = *currentfunc;
         }
-        // {
-        // short flag = *currentcell != 0;
-        // currentfunc = (intptr_t)currentfunc*(!flag) + (intptr_t)(*currentfunc)*flag;
-        // }
         currentfunc++;
         goto **currentfunc;
     
@@ -191,9 +186,10 @@ void runJIT ()
         #endif
         // printf("\nmoveloop!!!!!\n");
         currentfunc++;
+        register intptr_t jump = (intptr_t)*currentfunc;
         while( *currentcell != 0)
         {
-            currentcell += (intptr_t)*currentfunc;
+            currentcell += jump;
         }
         currentfunc++;
         goto **currentfunc;
@@ -207,16 +203,12 @@ void runJIT ()
         #endif
         *currentbuff = *currentcell;
         currentbuff++;
-        // printf("%c", *currentcell);
-        //*currentbuff = *currentcell;
-        //currentbuff++;
-        // if(MAXBUFFER < display) displayBuffer();
         currentfunc++;
         goto **currentfunc;
 
     gExit:
     
-    buffer[display+1] = '\0';
+    *currentbuff = '\0';
     printf("%s", buffer);
 
     #ifdef COUNT
