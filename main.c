@@ -5,7 +5,7 @@
 
 #define MAXINT 65535
 #define MAXCOLON 65535
-#define MAXBUFFER 1
+#define MAXBUFFER 500
 
 typedef void (*Exec) ();
 char * code;
@@ -151,7 +151,7 @@ void add () {
     #ifdef DEBUG
         printf("add %i\n", *currentfunc);
     #endif
-    *currentcell += (unsigned char) *currentfunc;
+    *currentcell += (signed char) *currentfunc;
     currentfunc++;
 }
 
@@ -208,6 +208,7 @@ void clear()
     #ifdef DEBUG
         printf("clear %i\n", currentcell-currentarray);
     #endif
+    // printf("\nclear!!!\n");
     *currentcell = 0;
     currentfunc++;
 }
@@ -217,23 +218,26 @@ void moveLoop ()
     #ifdef DEBUG
         printf("[>] %i\n", *currentcell);
     #endif
+    // printf("\nmoveloop!!!!!\n");
     currentfunc++;
     while( *currentcell != 0)
     {
-        currentcell += (unsigned char)*currentfunc;
+        currentcell += (signed char)*currentfunc;
     }
+    currentfunc++;
 }
+
+enum {bAdd, bMove, bLoopOpen, bLoopClose, bPoint, bClear, bMoveLoop};
 
 void runJIT ()
 {
-    printf("come here\n");
     currentcell = intarray;
     currentbuff = buffer;
     currentfunc = funcs;
     //int *
     //currentfunc = funcs - 1;
     int * postmp = pos + funcs;
-    
+    printf("\n");
     //(**currentfunc)();
     while(**currentfunc)
     {
@@ -424,11 +428,11 @@ void compile (char c)
 
             } else {
                 if(c == ']' && pos > 1)
-                    if(funcs[pos - 2] == 2)
+                    if(funcs[pos - 2] == loopOpen)
                     {
                         pos-= 2;
-                        funcs[pos] = 5;
-                        pos+=2;
+                        funcs[pos] = clear;
+                        pos++;
                         intcount = 0;
                         intstate = 0;
                         colonCount--;
@@ -459,7 +463,7 @@ void compile (char c)
                 //    printf("%i ", funcs[pos+i]);
 
                 if(c == ']' && pos > 1)
-                    if(funcs[pos - 2] == 2)
+                    if(funcs[pos - 2] == loopOpen)
                     {
                         //printf("  move loop");
                         pos -= 2;
