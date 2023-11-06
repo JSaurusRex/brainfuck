@@ -1,7 +1,7 @@
 
 build: main.c
 	# gcc -ggdb main.c -o brainfuck -g3
-	gcc -g0 -s -Ofast -flto main.c -o brainfuck -pipe
+	gcc -g0 -s -O3 -flto main.c -o brainfuck -pipe
 	# gcc -g0 -s -Ofast -flto old_main.c -o oldBrainfuck -pipe
 	# gcc -g0 -s -O3 main.c -o brainfuck -pipe
 	# clang -g0 -s -O3 main.c -o brainfuck_clang -flto
