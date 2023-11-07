@@ -49,6 +49,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 // #define DEBUG
 // #define COUNT
 #define SPECIALS
+#define NEXTFUNC
 // #define DOUBLES
 // #define BRANCHLESS
 
@@ -58,7 +59,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 {
     unsigned char intarray[MAXINT]; //all variables (array)
     unsigned char buffer[MAXBUFFER];
-    register void *restrict const*restrict currentfunc = funcs;
+    void *restrict const*restrict currentfunc = funcs;
     unsigned char * restrict currentcell = intarray;
     unsigned char * restrict currentbuff = buffer;
     
@@ -217,9 +218,16 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 // printf("\tfunc %i\tloop %i\ti %i\n", funcs[j], loops, j);
                 j++;
             }
+
+            int k = j;
+            while(funcs[k+1] == &&gLoopClose)
+            {
+                // printf("found double ]] %i\n", (k-j+3)/2);
+                k+=2;
+            }
             if(loops != 0)
                 printf("could not find end of loop\n");
-            funcs[i+1] = &funcs[j];
+            funcs[i+1] = &funcs[k];
             funcs[j] = &funcs[i+1];
             #ifdef BRANCHLESS
                 funcs[i+1] = &funcs[j] - &funcs[i+1];
@@ -247,7 +255,9 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
     gAdd:
     {
-        const void * restrict const nextfunc = *(currentfunc+2);
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+2);
+        #endif
         currentfunc++;
         #ifdef DEBUG
             printf("add %i\n", *currentfunc);
@@ -262,12 +272,18 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
         *currentcell += (intptr_t)*currentfunc;
         currentfunc++;
-        goto *nextfunc;
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
     }
 
     gMove:
     {
-        const void * const restrict nextfunc = *(currentfunc+2);
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+2);
+        #endif
         currentfunc++;
         #ifdef DEBUG
             printf("move %i\n", *currentfunc);
@@ -282,7 +298,11 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
         currentcell += (intptr_t) *currentfunc;
         currentfunc++;
-        goto *nextfunc;
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
     }
 
     gMul:
@@ -302,13 +322,9 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
 
         short amount = (intptr_t)*currentfunc;
-        const void * restrict const nextfunc = *(currentfunc+amount+1);
-
-        // if(!*currentcell)
-        // {
-        //     currentfunc += amount+1;
-        //     goto *nextfunc;
-        // }
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+amount+1);
+        #endif
 
         currentfunc++;
         unsigned char multiplier = 0;
@@ -336,6 +352,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         currentfunc += amount;
         // tmpcell += (intptr_t)*currentfunc;
         // currentfunc++;
+        // amount--;
 
         //skip first add (needed for multiplier var)
         //skip last move, unnecassary
@@ -359,7 +376,11 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         }
         // printf("cell[1] %i\n", intarray[1]);
         // printf("currentfunc %i\t%i\n", (intptr_t)currentfunc, (intptr_t)&runJIT);
-        goto *nextfunc;
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
     }
 
     gLoopOpen:
@@ -399,8 +420,8 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
             counts[eLoopClose]++;
         #endif
         #ifdef DOUBLES
-            // if(lastFunc == eLoopClose)
-            //     printf("double LoopClose\n");
+            if(lastFunc == eLoopClose)
+                printf("double LoopClose\n");
 
             //normal to be double :(
             lastFunc = eLoopClose;
@@ -449,7 +470,9 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double MoveLoop\n");
             lastFunc = eMoveLoop;
         #endif
-        const void * const nextfunc = *(currentfunc+2);
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+2);
+        #endif
         // printf("\nmoveloop!!!!!\n");
         currentfunc++;
         register intptr_t jump = (intptr_t)*currentfunc;
@@ -458,7 +481,11 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
             currentcell += jump;
         }
         currentfunc++;
-        goto *nextfunc;
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
     }
 
     gPoint:
@@ -474,12 +501,18 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double Point\n");
             lastFunc = ePoint;
         #endif
-        const void * restrict const nextfunc = *(currentfunc+1);
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+1);
+        #endif
         *currentbuff = *currentcell;
         currentbuff++;
         // printf("%c", cell);
         currentfunc++;
-        goto *nextfunc;
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
     }
 
     gExit:
