@@ -6,14 +6,14 @@
 
 #define MAXINT 65535
 #define MAXCOLON 65535
-#define MAXBUFFER 50000
+#define MAXBUFFER 8000
 
 int colon[MAXCOLON]; //what the position is of the last colon (array)
 short int lastcolon = 0;
 
 int pos = 0;
 
-char funcs[10000];
+void *funcs[10000];
 
 void displayBuffer();
 void addtoBuffer(char c);
@@ -44,11 +44,11 @@ int main(int argc, char **argv)
 }
 
 
-enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit};
+enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit};
 
 // #define DEBUG
 // #define COUNT
-// #define SPECIALS
+#define SPECIALS
 // #define DOUBLES
 // #define BRANCHLESS
 
@@ -58,59 +58,75 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 {
     unsigned char intarray[MAXINT]; //all variables (array)
     unsigned char buffer[MAXBUFFER];
-    register char *restrict currentfunc = funcs;
-    register unsigned char * restrict currentcell = intarray;
-    unsigned char * currentbuff = buffer;
-
-    #if defined(DEBUG) ||defined(COUNT)
-        char * str[] = {"add", "move", "map", "l open", "l close", "point", "clear", "movel"};
-    #endif
-
+    register void *restrict const*restrict currentfunc = funcs;
+    unsigned char * restrict currentcell = intarray;
+    unsigned char * restrict currentbuff = buffer;
+    
     {
         int r = 0;
         int w = 0;
         int cont = 1;
+        intptr_t last = -1;
         while(cont)
         {
+            intptr_t tmp = funcs[r];
             switch((long int)funcs[r])
             {
                 case eAdd:
                     
-                    funcs[w] = eAdd;
+                    funcs[w] = &&gAdd;
                     funcs[w+1] = funcs[r+1];
                     #ifdef SPECIALS
                         int counter = 1;
-                        if(funcs[r+counter*2] == eMove)
+                        if(funcs[r+counter*2] == eMove && last == eLoopOpen)
                         {
-                            #ifdef DEBUG
-                                printf(" %i,", funcs[r+1]);
-                            #endif
-                            int add = funcs[r+1];
+                            int totalMove = 0;
+                            char condition = 0;
                             while(funcs[r+counter*2] == eAdd || funcs[r+counter*2] == eMove)
                             {
-                                #ifdef DEBUG
-                                    printf("%i,", funcs[r+counter*2+1]);
-                                #endif
-                                funcs[w+counter+2] = funcs[r+counter*2+1];
+                                if(funcs[r+counter*2] == eMove)
+                                    totalMove += (intptr_t)funcs[r+counter*2+1];
                                 counter++;
+                                if(totalMove == 0 && funcs[r+counter*2] == eLoopClose)
+                                    condition = 1;
                             }
-                            counter--;
-                            funcs[w] = eMap;
-                            funcs[w+1] = counter+1;
-                            funcs[w+2] = add;
-                            r += counter*2;
-                            w += counter+1;
-                            #ifdef DEBUG
-                                printf("m ");
-                            #endif
+
+                            if(condition)
+                            {
+                                counter = 1;
+                                #ifdef DEBUG
+                                    printf(" %i,", funcs[r+1]);
+                                #endif
+                                int add = (intptr_t)funcs[r+1];
+
+                                w -= 2;
+                                
+                                while(funcs[r+counter*2] == eAdd || funcs[r+counter*2] == eMove)
+                                {
+                                    #ifdef DEBUG
+                                        printf("%i,", funcs[r+counter*2+1]);
+                                    #endif
+                                    funcs[w+counter+2] = funcs[r+counter*2+1];
+                                    counter++;
+                                }
+                                counter--;
+                                funcs[w] = &&gMul;
+                                funcs[w+1] = (void*)(counter+1-1);
+                                funcs[w+2] = (void*)add;
+                                r += counter*2 + 2;
+                                w += counter+1-1; //overwrite last one
+                                #ifdef DEBUG
+                                    printf("m ");
+                                #endif
+                            }
                         }
                         #ifdef DEBUG
                         else
-                            printf("+%i ", funcs[r+1]);
+                            printf("+");
                         #endif
                     #else
                         #ifdef DEBUG
-                            printf("+%i ", funcs[r+1]);
+                            printf("+");
                         #endif
                     #endif
                     w++;
@@ -118,122 +134,100 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                     break;
                 case eMove:
                     #ifdef DEBUG
-                        printf(">%i ", funcs[r+1]);
+                        printf(">");
                     #endif
-                    funcs[w] = eMove;
+                    funcs[w] = &&gMove;
                     funcs[w+1] = funcs[r+1];
                     w++;
                     r++;
                     break;
                 case eLoopOpen:
                     #ifdef DEBUG
-                        printf("[%i ", funcs[r+1]);
+                        printf("[");
                     #endif
-                    funcs[w] = eLoopOpen;
-                    // funcs[w+1] = &funcs[(&funcs[r+1]-funcs)/sizeof-(r-w)];
-                    w+=2;
-                    r+=2;
+                    funcs[w] = &&gLoopOpen;
+                    funcs[w+1] = &funcs[((intptr_t)&funcs[r+1]-(intptr_t)funcs)/sizeof(intptr_t)-(r-w)];
+                    w++;
+                    r++;
                     break;
                 case eLoopClose:
                     #ifdef DEBUG
-                        printf("]%i ", funcs[r+1]);
+                        printf("]");
                     #endif
-                    funcs[w] = eLoopClose;
-                    // funcs[w+1] = &funcs[r+1];
-                    w+=2;
-                    r+=2;
+                    funcs[w] = &&gLoopClose;
+                    funcs[w+1] = &funcs[r+1];
+                    w++;
+                    r++;
                     break;
                 case ePoint:
                     #ifdef DEBUG
-                        printf(". ");
+                        printf(".");
                     #endif
-                    funcs[w] = ePoint;
+                    funcs[w] = &&gPoint;
                     break;
                 case eClear:
                     #ifdef DEBUG
-                        printf("(-) ");
+                        printf("(-)");
                     #endif
-                    funcs[w] = eClear;
+                    funcs[w] = &&gClear;
                     break;
                 case eMoveLoop:
                     #ifdef DEBUG
-                        printf("{>%i} ", funcs[r+1]);
+                        printf("{>%i}", funcs[r+1]);
                     #endif
-                    funcs[w] = eMoveLoop;
+                    funcs[w] = &&gMoveLoop;
                     funcs[w+1] = funcs[r+1];
                     w++;
                     r++;
                     break;
                 case eExit:
                     #ifdef DEBUG
-                        printf("e%i", w);
+                        printf("e");
                     #endif
-                    funcs[w] = eExit;
-                    printf("r %i\n", r);
+                    funcs[w] = &&gExit;
                     cont = 0;
                     break;
             }
             r++;
             w++;
+            last = tmp;
         }
     }
 
     printf("\n");
-
-    int colonIndex = 0;
     //fix pointers
     for(int i = 0; i < 10000; i++)
     {
-        // printf("%i| %s : %i\n", i, str[funcs[i]], funcs[i+1]);
-        int cont = 1;
-        switch(funcs[i])
+        if(funcs[i] == &&gLoopOpen)
         {
-            case eAdd:
-            case eMove:
-            case eMoveLoop:
-                i++;
-                break;
-
-            case ePoint:
-            case eClear:
-                break;
-
-            case eMap:
-                int add = funcs[i+1]+1;
-                i += add;
-                // printf("map : %i  \ti : %i\n", add, i);
-                break;
-                        
-            case eLoopOpen:
-                colon[colonIndex] = i+1;
-                colonIndex++;
-                i+=2;
-                // printf("colon found %i\n", i-1);
-                break;
-
-            case eLoopClose:
-                colonIndex--;
-                int j = colon[colonIndex];
-                // printf("colon %i [%i]\t%d\n", j, colonIndex, &funcs[i+1]-&funcs[j]);
-                // if(abs(&funcs[j] - &funcs[i+1]) > 255)
-                    // printf("\n\noh oh %i\n\n", abs(&funcs[j] - &funcs[i+1]));
-                
-                // short * ptr = 
-                *((short*)(&funcs[j])) = &funcs[i+1] - &funcs[j];
-                *((short*)(&funcs[i+1])) = &funcs[j] - &funcs[i+1];
-                // printf("what it should be %i, what it is %i\n", *((short*)(&funcs[j])), &funcs[i+1] - &funcs[j]);
-                // funcs[j] = &funcs[i+1] - &funcs[j];
-                // funcs[i+1] = &funcs[j] - &funcs[i+1];
-                i+=2;
-                break;
-
-            case eExit:
-                cont = 0;
-                printf("exit\n");
-                break;
+            int loops = 1;
+            int j = i+1;
+            while(loops != 0 && funcs[j] != &&gExit && j < 10000)
+            {
+                if(funcs[j] == &&gLoopOpen)
+                {
+                    loops++;
+                    // printf("open ");
+                }
+                if(funcs[j] == &&gLoopClose)
+                {
+                    // printf("close ");
+                    loops--;
+                }
+                // printf("\tfunc %i\tloop %i\ti %i\n", funcs[j], loops, j);
+                j++;
+            }
+            if(loops != 0)
+                printf("could not find end of loop\n");
+            funcs[i+1] = &funcs[j];
+            funcs[j] = &funcs[i+1];
+            #ifdef BRANCHLESS
+                funcs[i+1] = &funcs[j] - &funcs[i+1];
+                funcs[j] = &funcs[i+1] - &funcs[j];
+            #endif
         }
 
-        if(!cont)
+        if(funcs[i] == &&gExit)
             break;
     }
 
@@ -249,14 +243,11 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         short lastFunc = -1;
     #endif
 
-    // printf("%d\n", &&gAdd-&&gExit);
-
-    const void * const lookup[] = {&&gAdd, &&gMove, &&gMap, &&gLoopOpen, &&gLoopClose, &&gPoint, &&gClear, &&gMoveLoop, &&gExit};
-
-    goto *lookup[*currentfunc];
+    goto **currentfunc;
 
     gAdd:
     {
+        const void * restrict const nextfunc = *(currentfunc+2);
         currentfunc++;
         #ifdef DEBUG
             printf("add %i\n", *currentfunc);
@@ -269,13 +260,14 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double Add\n");
             lastFunc = eAdd;
         #endif
-        *currentcell += *currentfunc;
+        *currentcell += (intptr_t)*currentfunc;
         currentfunc++;
-        goto *lookup[*currentfunc];
+        goto *nextfunc;
     }
 
     gMove:
     {
+        const void * const restrict nextfunc = *(currentfunc+2);
         currentfunc++;
         #ifdef DEBUG
             printf("move %i\n", *currentfunc);
@@ -288,41 +280,86 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double Move\n");
             lastFunc = eMove;
         #endif
-        currentcell += *currentfunc;
+        currentcell += (intptr_t) *currentfunc;
         currentfunc++;
-        goto *lookup[*currentfunc];
+        goto *nextfunc;
     }
 
-    gMap:
+    gMul:
     {
         currentfunc++;
         #ifdef DEBUG
-            printf("map %i\n", *currentfunc);
+            printf("Mul %i\n", *currentfunc);
         #endif
         #ifdef COUNT
-            counts[eMap]++;
+            counts[eMul]++;
         #endif
         #ifdef DOUBLES
-            if(lastFunc == eMap)
-                printf("double Map\n");
-            lastFunc = eMap;
+            if(lastFunc == eMul)
+                printf("double Mul\n");
+            lastFunc = eMul;
         #endif
-        short amount = *currentfunc;
-        currentfunc++;
-        for(short i = 0; i < amount; i++)
-        {
-            *currentcell += *currentfunc;
-            currentfunc++;
 
-            i++;
-            if(i >= amount)
-                break;
+
+        short amount = (intptr_t)*currentfunc;
+        const void * restrict const nextfunc = *(currentfunc+amount+1);
+
+        // if(!*currentcell)
+        // {
+        //     currentfunc += amount+1;
+        //     goto *nextfunc;
+        // }
+
+        currentfunc++;
+        unsigned char multiplier = 0;
+        char div = *currentfunc;
+        unsigned char cell = *currentcell;
+        // multiplier = cell / (-div);
+        // printf("left over %i mod %i = %i\n", cell, -div, cell%(-div));
+        // if(cell % -div)
+        // // {
+        //     printf("doing it normally\n");
+            // multiplier = 0;
+            while(cell)
+            {
+                cell += div;
+                multiplier++;
+            }
+        // }
+        //     printf("doing it fast\n");
+        *currentcell = 0;
+        *currentfunc++;
+        amount-=1;
+
+        unsigned char * restrict tmpcell = currentcell;
+        void *const* tmpfunc = currentfunc;
+        currentfunc += amount;
+        // tmpcell += (intptr_t)*currentfunc;
+        // currentfunc++;
+
+        //skip first add (needed for multiplier var)
+        //skip last move, unnecassary
+        for(short i = 0; i < amount-1; i+=2)
+        {
+            // printf("i: %i < amount: %i\n", i, amount);
             //move
-            currentcell += *currentfunc;
-            currentfunc++;
+            tmpcell += (intptr_t)*tmpfunc;
+            tmpfunc++;
+            // i++;
+
+            // if(i >= amount)
+            //     break;
+            // printf(" i: %i < amount: %i\n", i, amount);
+            //add
+            // printf("%i multiplier %i * %i += %i", currentcell-intarray, multiplier, (intptr_t)*tmpfunc, *currentcell);
+            *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
+            // printf("    %i\n", *currentcell);
+            tmpfunc++;
+            // i++;            
         }
-        // printf("currentfunc %i\t%i\n", currentfunc, &runJIT);
-        goto *lookup[*currentfunc];
+        // printf("cell[1] %i\n", intarray[1]);
+        // printf("currentfunc %i\t%i\n", (intptr_t)currentfunc, (intptr_t)&runJIT);
+        goto *nextfunc;
     }
 
     gLoopOpen:
@@ -343,15 +380,15 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         {
             // short flag = *currentcell == 0;
 
-            currentfunc += *currentfunc*(!*currentcell);
+            currentfunc += (intptr_t)*currentfunc*(!*currentcell);
         }
         #else
         if(!*currentcell)
-            currentfunc += *((short*)currentfunc);
+            currentfunc = *currentfunc;
         #endif
 
-        currentfunc+=2;
-        goto *lookup[*currentfunc];
+        currentfunc++;
+        goto **currentfunc;
 
     gLoopClose:
         currentfunc++;
@@ -372,15 +409,15 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
         #ifdef BRANCHLESS
         {
-            currentfunc += (*currentfunc)*(*currentcell != 0);
+            currentfunc += (intptr_t)(*currentfunc)*(*currentcell != 0);
         }
         #else
         if(*currentcell)
-            currentfunc += *(short*)currentfunc;
+            currentfunc = *currentfunc;
         #endif
 
-        currentfunc+=2;
-        goto *lookup[*currentfunc];
+        currentfunc++;
+        goto **currentfunc;
     
     gClear:
         #ifdef DEBUG
@@ -397,7 +434,7 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         // printf("\nclear!!!\n");
         currentfunc++;
         *currentcell = 0;
-        goto *lookup[*currentfunc];
+        goto **currentfunc;
 
     gMoveLoop:
     {
@@ -412,15 +449,16 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double MoveLoop\n");
             lastFunc = eMoveLoop;
         #endif
+        const void * const nextfunc = *(currentfunc+2);
         // printf("\nmoveloop!!!!!\n");
         currentfunc++;
-        register char jump = *currentfunc;
+        register intptr_t jump = (intptr_t)*currentfunc;
         while( *currentcell != 0)
         {
             currentcell += jump;
         }
         currentfunc++;
-        goto *lookup[*currentfunc];
+        goto *nextfunc;
     }
 
     gPoint:
@@ -436,11 +474,12 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double Point\n");
             lastFunc = ePoint;
         #endif
+        const void * restrict const nextfunc = *(currentfunc+1);
         *currentbuff = *currentcell;
         currentbuff++;
         // printf("%c", cell);
         currentfunc++;
-        goto *lookup[*currentfunc];
+        goto *nextfunc;
     }
 
     gExit:
@@ -448,9 +487,11 @@ enum {eAdd, eMove, eMap, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
     float endTime = (float)clock()/CLOCKS_PER_SEC;
 
     *currentbuff = '\0';
-    printf("%s", buffer);
-
+    printf("%s\n", buffer);
+    // printf("display %i\n", currentbuff-buffer);
     #ifdef COUNT
+
+        char * str[] = {"add", "move", "Mul", "l open", "l close", "point", "clear", "movel"};
         for(int i = 0; i < eExit; i++)
         {
             printf("%s\t%i\n", str[i], counts[i]);
@@ -478,10 +519,10 @@ void compile (char c)
             } else {
                 #ifdef SPECIALS
                     if(c == ']' && pos > 1)
-                        if(funcs[pos - 2] == eLoopOpen)
+                        if(funcs[pos - 2] == (void*)eLoopOpen)
                         {
                             pos-= 2;
-                            funcs[pos] = eClear;
+                            funcs[pos] = (void*)eClear;
                             pos++;
                             intcount = 0;
                             intstate = 0;
@@ -490,9 +531,9 @@ void compile (char c)
                         }
                 #endif
                 
-                funcs[pos] = eAdd;
+                funcs[pos] = (void*)eAdd;
                 pos++;
-                funcs[pos] = intcount;
+                funcs[pos] = (void*)(intptr_t)intcount;
                 //printf("\n pos: %i  funcs: %i, add: %i", pos, (int) funcs[pos-1], &add);
                 intcount = 0;
                 intstate = 0;
@@ -512,12 +553,12 @@ void compile (char c)
             {
                 #ifdef SPECIALS
                     if(c == ']' && pos > 1)
-                        if(funcs[pos - 2] == eLoopOpen)
+                        if(funcs[pos - 2] == (void*)eLoopOpen)
                         {
                             //printf("  move loop");
                             pos -= 2;
-                            funcs[pos] = eMoveLoop;
-                            funcs[pos+1] = movecount;
+                            funcs[pos] = (void*)eMoveLoop;
+                            funcs[pos+1] = (void*)(intptr_t)movecount;
                             pos+= 2;
 
                             movecount = 0;
@@ -527,9 +568,9 @@ void compile (char c)
                         }
                 #endif
                 
-                funcs[pos] = eMove;
+                funcs[pos] = (void*)eMove;
                 pos++;
-                funcs[pos] = movecount;
+                funcs[pos] = (void*)(intptr_t)movecount;
                 movecount = 0;
                 movestate = 0;
                 pos++;
@@ -568,34 +609,34 @@ void compile (char c)
             //     colon[colonCount] = pos - 2;
             //     return;
             // }
-	        funcs[pos] = eLoopOpen;
+	        funcs[pos] = (void*)eLoopOpen;
 	        //printf("\n pos: %i  funcs: %i, loopOpen: %i", pos, (int) funcs[pos], &loopOpen);
-	        // colonCount++;
-	        // colon[colonCount] = pos;
-	        pos+=3;
+	        colonCount++;
+	        colon[colonCount] = pos;
+	        pos+=2;
 			break;
 
 	    case ']':
             // int overwrite = 0;
-	        // if(pos > 2 && funcs[pos -2] == eLoopClose)
+	        // if(pos > 2 && funcs[pos -2] == (void*)eLoopClose)
             // {
             //     // printf("\n dubble ]]");
             //     pos -= 2;
             //     overwrite = 1;
             // }
 
-	        funcs[pos] = eLoopClose;
-	        // pos++;
+	        funcs[pos] = (void*)eLoopClose;
+	        pos++;
 	        // if(!overwrite)
-            // funcs[pos] = colon[colonCount] + 1 + funcs;
-	        // funcs[colon[colonCount]+1] = pos + funcs;
+            funcs[pos] = colon[colonCount] + 1 + funcs;
+	        funcs[colon[colonCount]+1] = pos + funcs;
             // printf("%d == %d?\n", pos-colon[colonCount] + 1, funcs[pos]);
-	        // colonCount--;
-	        pos+=3;
+	        colonCount--;
+	        pos++;
 	        break;
 
 	    case '.':
-	        funcs[pos] = ePoint;
+	        funcs[pos] = (void*)ePoint;
 	        pos++;
 	        break;
     }
@@ -627,7 +668,7 @@ void load_file (char * file)
         compile(ch);
         i++;
     }
-    funcs[pos] = eExit;
+    funcs[pos] = (void*)eExit;
     fclose(fp);
     return;
 }
