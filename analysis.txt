@@ -3,48 +3,27 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls  Ts/call  Ts/call  name    
- 14.11      0.41     0.41                             runJIT (main.c:248 @ 1b0f)
-  7.57      0.63     0.22                             runJIT (main.c:232 @ 1a88)
-  7.57      0.85     0.22                             runJIT (main.c:236 @ 1aa1)
-  5.51      1.01     0.16                             runJIT (main.c:254 @ 1af5)
-  5.16      1.16     0.15                             runJIT (main.c:282 @ 1b5e)
-  4.82      1.30     0.14                             runJIT (main.c:224 @ 1a7e)
-  4.82      1.44     0.14                             runJIT (main.c:248 @ 1ac7)
-  4.30      1.57     0.13                             runJIT (main.c:293 @ 1b79)
-  3.44      1.67     0.10                             runJIT (main.c:320 @ 1bc0)
-  3.44      1.77     0.10                             runJIT (main.c:322 @ 1bc4)
-  3.44      1.87     0.10                             runJIT (main.c:227 @ 1a84)
-  3.44      1.97     0.10                             runJIT (main.c:257 @ 1b05)
-  3.10      2.06     0.09                             runJIT (main.c:270 @ 1b4a)
-  3.10      2.15     0.09                             runJIT (main.c:281 @ 1b5a)
-  2.41      2.22     0.07                             runJIT (main.c:279 @ 1b57)
-  2.06      2.28     0.06                             runJIT (main.c:244 @ 1aaa)
-  2.06      2.34     0.06                             runJIT (main.c:246 @ 1ab9)
-  1.89      2.39     0.06                             runJIT (main.c:298 @ 1b89)
-  1.89      2.45     0.06                             runJIT (main.c:322 @ 1bcc)
-  1.72      2.50     0.05                             runJIT (main.c:278 @ 1b4e)
-  1.38      2.54     0.04                             runJIT (main.c:297 @ 1b85)
-  1.38      2.58     0.04                             runJIT (main.c:251 @ 1ae0)
-  1.38      2.62     0.04                             runJIT (main.c:261 @ 1b33)
-  1.20      2.65     0.04                             runJIT (main.c:250 @ 1ad2)
-  1.20      2.69     0.04                             runJIT (main.c:253 @ 1ae4)
-  1.03      2.72     0.03                             runJIT (main.c:326 @ 1bd5)
-  1.03      2.75     0.03                             runJIT (main.c:268 @ 1b3b)
-  0.86      2.77     0.03                             runJIT (main.c:290 @ 1b6a)
-  0.86      2.80     0.03                             runJIT (main.c:327 @ 1bd9)
-  0.86      2.82     0.03                             runJIT (main.c:305 @ 1b91)
-  0.52      2.84     0.02                             runJIT (main.c:295 @ 1b82)
-  0.52      2.85     0.02                             runJIT (main.c:308 @ 1ba0)
-  0.34      2.86     0.01                             runJIT (main.c:215 @ 1a59)
-  0.34      2.87     0.01                             runJIT (main.c:220 @ 1a5d)
-  0.34      2.88     0.01                             runJIT (main.c:239 @ 1aa6)
-  0.34      2.89     0.01                             runJIT (main.c:285 @ 1b66)
-  0.34      2.90     0.01                             runJIT (main.c:309 @ 1ba5)
-  0.17      2.91     0.01                             runJIT (main.c:310 @ 1ba9)
-  0.17      2.91     0.01                             runJIT (main.c:317 @ 1bb1)
-  0.00      2.91     0.00    11814     0.00     0.00  compile (main.c:364 @ 1d1d)
-  0.00      2.91     0.00        1     0.00     0.00  load_file (main.c:500 @ 2258)
-  0.00      2.91     0.00        1     0.00     0.00  runJIT (main.c:57 @ 1303)
+ 25.98      1.11     1.11                             runJIT (main.c:381 @ 1912)
+ 19.89      1.96     0.85                             runJIT (main.c:352 @ 18e2)
+ 11.93      2.47     0.51                             runJIT (main.c:291 @ 181c)
+ 10.76      2.93     0.46                             runJIT (main.c:272 @ 17f7)
+  5.27      3.16     0.23                             runJIT (main.c:289 @ 180e)
+  4.56      3.36     0.20                             runJIT (main.c:290 @ 1818)
+  2.81      3.48     0.12                             runJIT (main.c:376 @ 18fb)
+  2.81      3.60     0.12                             runJIT (main.c:323 @ 18b2)
+  2.57      3.71     0.11                             runJIT (main.c:270 @ 17e5)
+  2.57      3.82     0.11                             runJIT (main.c:380 @ 190e)
+  2.11      3.91     0.09                             runJIT (main.c:258 @ 17e1)
+  2.11      4.00     0.09                             runJIT (main.c:348 @ 18d4)
+  1.87      4.08     0.08                             runJIT (main.c:254 @ 17cf)
+  1.64      4.15     0.07                             runJIT (main.c:377 @ 1904)
+  1.17      4.20     0.05                             runJIT (main.c:347 @ 18cb)
+  0.94      4.24     0.04                             runJIT (main.c:351 @ 18de)
+  0.70      4.27     0.03                             runJIT (main.c:338 @ 18c7)
+  0.23      4.28     0.01                             runJIT (main.c:355 @ 18f7)
+  0.00      4.28     0.00    11814     0.00     0.00  compile (main.c:468 @ 1a4a)
+  0.00      4.28     0.00        1     0.00     0.00  load_file (main.c:604 @ 1cc6)
+  0.00      4.28     0.00        1     0.00     0.00  runJIT (main.c:58 @ 1303)
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -82,17 +61,17 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 2 byte(s) for 0.34% of 2.91 seconds
+granularity: each sample hit covers 2 byte(s) for 0.23% of 4.28 seconds
 
 index % time    self  children    called     name
-                0.00    0.00   11814/11814       load_file (main.c:521 @ 231d) [128]
-[40]     0.0    0.00    0.00   11814         compile (main.c:364 @ 1d1d) [40]
+                0.00    0.00   11814/11814       load_file (main.c:625 @ 1d8b) [82]
+[19]     0.0    0.00    0.00   11814         compile (main.c:468 @ 1a4a) [19]
 -----------------------------------------------
-                0.00    0.00       1/1           main (main.c:32 @ 129c) [139]
-[41]     0.0    0.00    0.00       1         load_file (main.c:500 @ 2258) [41]
+                0.00    0.00       1/1           main (main.c:32 @ 129c) [93]
+[20]     0.0    0.00    0.00       1         load_file (main.c:604 @ 1cc6) [20]
 -----------------------------------------------
-                0.00    0.00       1/1           main (main.c:38 @ 12e3) [144]
-[42]     0.0    0.00    0.00       1         runJIT (main.c:57 @ 1303) [42]
+                0.00    0.00       1/1           main (main.c:38 @ 12e3) [98]
+[21]     0.0    0.00    0.00       1         runJIT (main.c:58 @ 1303) [21]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -185,17 +164,10 @@ notice and this notice are preserved.
 
 Index by function name
 
-  [40] compile (main.c:364 @ 1d1d) [22] runJIT (main.c:251 @ 1ae0) [8] runJIT (main.c:293 @ 1b79)
-  [41] load_file (main.c:500 @ 2258) [25] runJIT (main.c:253 @ 1ae4) [31] runJIT (main.c:295 @ 1b82)
-  [42] runJIT (main.c:57 @ 1303) [4] runJIT (main.c:254 @ 1af5) [21] runJIT (main.c:297 @ 1b85)
-  [33] runJIT (main.c:215 @ 1a59) [12] runJIT (main.c:257 @ 1b05) [18] runJIT (main.c:298 @ 1b89)
-  [34] runJIT (main.c:220 @ 1a5d) [1] runJIT (main.c:248 @ 1b0f) [30] runJIT (main.c:305 @ 1b91)
-   [6] runJIT (main.c:224 @ 1a7e) [23] runJIT (main.c:261 @ 1b33) [32] runJIT (main.c:308 @ 1ba0)
-  [11] runJIT (main.c:227 @ 1a84) [27] runJIT (main.c:268 @ 1b3b) [37] runJIT (main.c:309 @ 1ba5)
-   [2] runJIT (main.c:232 @ 1a88) [13] runJIT (main.c:270 @ 1b4a) [38] runJIT (main.c:310 @ 1ba9)
-   [3] runJIT (main.c:236 @ 1aa1) [20] runJIT (main.c:278 @ 1b4e) [39] runJIT (main.c:317 @ 1bb1)
-  [35] runJIT (main.c:239 @ 1aa6) [15] runJIT (main.c:279 @ 1b57) [9] runJIT (main.c:320 @ 1bc0)
-  [16] runJIT (main.c:244 @ 1aaa) [14] runJIT (main.c:281 @ 1b5a) [10] runJIT (main.c:322 @ 1bc4)
-  [17] runJIT (main.c:246 @ 1ab9) [5] runJIT (main.c:282 @ 1b5e) [19] runJIT (main.c:322 @ 1bcc)
-   [7] runJIT (main.c:248 @ 1ac7) [36] runJIT (main.c:285 @ 1b66) [26] runJIT (main.c:326 @ 1bd5)
-  [24] runJIT (main.c:250 @ 1ad2) [28] runJIT (main.c:290 @ 1b6a) [29] runJIT (main.c:327 @ 1bd9)
+  [19] compile (main.c:468 @ 1a4a) [5] runJIT (main.c:289 @ 180e) [16] runJIT (main.c:351 @ 18de)
+  [20] load_file (main.c:604 @ 1cc6) [6] runJIT (main.c:290 @ 1818) [2] runJIT (main.c:352 @ 18e2)
+  [21] runJIT (main.c:58 @ 1303) [3] runJIT (main.c:291 @ 181c) [18] runJIT (main.c:355 @ 18f7)
+  [13] runJIT (main.c:254 @ 17cf) [8] runJIT (main.c:323 @ 18b2) [7] runJIT (main.c:376 @ 18fb)
+  [11] runJIT (main.c:258 @ 17e1) [17] runJIT (main.c:338 @ 18c7) [14] runJIT (main.c:377 @ 1904)
+   [9] runJIT (main.c:270 @ 17e5) [15] runJIT (main.c:347 @ 18cb) [10] runJIT (main.c:380 @ 190e)
+   [4] runJIT (main.c:272 @ 17f7) [12] runJIT (main.c:348 @ 18d4) [1] runJIT (main.c:381 @ 1912)

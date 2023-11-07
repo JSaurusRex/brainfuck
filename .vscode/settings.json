@@ -3,6 +3,7 @@
         "*.ipp": "c",
         "__bit_reference": "c",
         "future": "c",
-        "ios": "c"
+        "ios": "c",
+        "time.h": "c"
     }
 }
