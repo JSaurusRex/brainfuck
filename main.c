@@ -50,6 +50,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 // #define COUNT
 #define SPECIALS
 #define NEXTFUNC
+// #define BRANCHCOUNT
 // #define DOUBLES
 // #define BRANCHLESS
 
@@ -57,7 +58,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
  __attribute__((hot)) void runJIT ()
 {
-    unsigned char intarray[MAXINT]; //all variables (array)
+    unsigned char intarray[MAXINT] = {0}; //all variables (array)
     unsigned char buffer[MAXBUFFER];
     void *restrict const*restrict currentfunc = funcs;
     unsigned char * restrict currentcell = intarray;
@@ -111,11 +112,28 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                                     counter++;
                                 }
                                 counter--;
-                                funcs[w] = &&gMul;
-                                funcs[w+1] = (void*)(counter+1-1);
-                                funcs[w+2] = (void*)add;
-                                r += counter*2 + 2;
-                                w += counter+1-1; //overwrite last one
+                                if(counter == 1)
+                                {
+                                    funcs[w] = &&gMul2;
+                                    funcs[w+1] = (void*)(counter);
+                                    funcs[w+2] = (void*)add;
+                                    r += counter*2 + 2;
+                                    w += counter; //overwrite last one
+                                }else if(counter == 2)
+                                {
+                                    funcs[w] = &&gMul4;
+                                    funcs[w+1] = (void*)(counter);
+                                    funcs[w+2] = (void*)add;
+                                    r += counter*2 + 2;
+                                    w += counter; //overwrite last one
+                                }else
+                                {
+                                    funcs[w] = &&gMul;
+                                    funcs[w+1] = (void*)(counter);
+                                    funcs[w+2] = (void*)add;
+                                    r += counter*2 + 2;
+                                    w += counter; //overwrite last one
+                                }
                                 #ifdef DEBUG
                                     printf("m ");
                                 #endif
@@ -241,8 +259,18 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
     printf("starting now\n");
 
+    #ifdef BRANCHCOUNT
+        #ifndef COUNT
+            #define COUNT
+        #endif
+    #endif
+
     #ifdef COUNT
         int counts[eExit] = {0};
+    #endif
+
+    #ifdef BRANCHCOUNT
+        int branches[2] = {0};
     #endif
 
     float startTime = (float)clock()/CLOCKS_PER_SEC;
@@ -305,6 +333,110 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
     }
 
+    gMul2:
+    {
+        currentfunc++;
+        #ifdef DEBUG
+            printf("Mul %i\n", *currentfunc);
+        #endif
+        #ifdef COUNT
+            counts[eMul]++;
+        #endif
+        #ifdef DOUBLES
+            if(lastFunc == eMul)
+                printf("double Mul\n");
+            lastFunc = eMul;
+        #endif
+
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+3+1);
+        #endif
+
+        currentfunc++;
+        unsigned char multiplier = 0;
+        char div = *currentfunc;
+        unsigned char cell = *currentcell;
+        // multiplier = cell / (-div);
+        // if(cell % -div)
+
+        while(cell)
+        {
+            cell += div;
+            multiplier++;
+        }
+        *currentcell = 0;
+        *currentfunc++;
+
+        unsigned char * restrict tmpcell = currentcell;
+        void *const* tmpfunc = currentfunc;
+        currentfunc += 2;
+
+        tmpcell += (intptr_t)*tmpfunc;
+        tmpfunc++;
+        *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
+        tmpfunc++;       
+        
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
+    }
+
+    gMul4:
+    {
+        currentfunc++;
+        #ifdef DEBUG
+            printf("Mul %i\n", *currentfunc);
+        #endif
+        #ifdef COUNT
+            counts[eMul]++;
+        #endif
+        #ifdef DOUBLES
+            if(lastFunc == eMul)
+                printf("double Mul\n");
+            lastFunc = eMul;
+        #endif
+
+        #ifdef NEXTFUNC
+            const void * restrict const nextfunc = *(currentfunc+5+1);
+        #endif
+
+        currentfunc++;
+        unsigned char multiplier = 0;
+        char div = *currentfunc;
+        unsigned char cell = *currentcell;
+        // multiplier = cell / (-div);
+        // if(cell % -div)
+
+        while(cell)
+        {
+            cell += div;
+            multiplier++;
+        }
+        *currentcell = 0;
+        *currentfunc++;
+
+        unsigned char * restrict tmpcell = currentcell;
+        void *const* tmpfunc = currentfunc;
+        currentfunc += 4;
+
+        tmpcell += (intptr_t)*tmpfunc;
+        tmpfunc++;
+        *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
+        tmpfunc++;
+        tmpcell += (intptr_t)*tmpfunc;
+        tmpfunc++;
+        *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
+        tmpfunc++;  
+        
+        #ifdef NEXTFUNC
+            goto *nextfunc;
+        #else
+            goto **currentfunc;
+        #endif
+    }
+
     gMul:
     {
         currentfunc++;
@@ -321,28 +453,23 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
 
 
-        short amount = (intptr_t)*currentfunc;
+        char amount = (intptr_t)*currentfunc;
         #ifdef NEXTFUNC
             const void * restrict const nextfunc = *(currentfunc+amount+1);
         #endif
 
         currentfunc++;
         unsigned char multiplier = 0;
-        char div = *currentfunc;
+        unsigned char div = -(intptr_t)*currentfunc;
         unsigned char cell = *currentcell;
         // multiplier = cell / (-div);
-        // printf("left over %i mod %i = %i\n", cell, -div, cell%(-div));
         // if(cell % -div)
-        // // {
-        //     printf("doing it normally\n");
-            // multiplier = 0;
-            while(cell)
-            {
-                cell += div;
-                multiplier++;
-            }
-        // }
-        //     printf("doing it fast\n");
+
+        while(cell)
+        {
+            cell -= div;
+            multiplier++;
+        }
         *currentcell = 0;
         *currentfunc++;
         amount-=1;
@@ -350,32 +477,14 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         unsigned char * restrict tmpcell = currentcell;
         void *const* tmpfunc = currentfunc;
         currentfunc += amount;
-        // tmpcell += (intptr_t)*currentfunc;
-        // currentfunc++;
-        // amount--;
 
-        //skip first add (needed for multiplier var)
-        //skip last move, unnecassary
-        for(short i = 0; i < amount-1; i+=2)
+        for(char i = 0; i < amount-1; i+=2)
         {
-            // printf("i: %i < amount: %i\n", i, amount);
-            //move
             tmpcell += (intptr_t)*tmpfunc;
             tmpfunc++;
-            // i++;
-
-            // if(i >= amount)
-            //     break;
-            // printf(" i: %i < amount: %i\n", i, amount);
-            //add
-            // printf("%i multiplier %i * %i += %i", currentcell-intarray, multiplier, (intptr_t)*tmpfunc, *currentcell);
             *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
-            // printf("    %i\n", *currentcell);
-            tmpfunc++;
-            // i++;            
+            tmpfunc++;       
         }
-        // printf("cell[1] %i\n", intarray[1]);
-        // printf("currentfunc %i\t%i\n", (intptr_t)currentfunc, (intptr_t)&runJIT);
         #ifdef NEXTFUNC
             goto *nextfunc;
         #else
@@ -405,7 +514,12 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         }
         #else
         if(!*currentcell)
+        {
             currentfunc = *currentfunc;
+            #ifdef BRANCHCOUNT
+                branches[0]++;
+            #endif
+        }
         #endif
 
         currentfunc++;
@@ -420,8 +534,10 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
             counts[eLoopClose]++;
         #endif
         #ifdef DOUBLES
-            if(lastFunc == eLoopClose)
-                printf("double LoopClose\n");
+            // if(lastFunc == eLoopClose)
+            //     printf("double LoopClose\n");
+            if(lastFunc == eLoopOpen)
+                printf("[ to ]\n");
 
             //normal to be double :(
             lastFunc = eLoopClose;
@@ -433,10 +549,19 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
             currentfunc += (intptr_t)(*currentfunc)*(*currentcell != 0);
         }
         #else
-        if(*currentcell)
-            currentfunc = *currentfunc;
+
+        void ** nextfunc = *currentfunc;
+        if(!*currentcell)
+        {
+            // currentfunc++;
+            #ifdef BRANCHCOUNT
+                branches[1]++;
+            #endif
+            nextfunc = currentfunc;
+        }
         #endif
 
+        currentfunc = nextfunc;
         currentfunc++;
         goto **currentfunc;
     
@@ -529,6 +654,12 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         {
             printf("%s\t%i\n", str[i], counts[i]);
         }
+    #endif
+
+    #ifdef BRANCHCOUNT
+
+        printf("branch 1 %f\n", (float)branches[0]/counts[eLoopOpen]*100);
+        printf("branch 2 %f\n", (float)branches[1]/counts[eLoopClose]*100);
     #endif
 
     printf("\ntime %.3f\n", endTime-startTime);
