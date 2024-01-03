@@ -49,7 +49,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 // #define DEBUG
 // #define COUNT
 #define SPECIALS
-#define NEXTFUNC
+// #define NEXTFUNC
 // #define BRANCHCOUNT
 // #define DOUBLES
 // #define BRANCHLESS
@@ -60,7 +60,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 {
     unsigned char intarray[MAXINT] = {0}; //all variables (array)
     unsigned char buffer[MAXBUFFER];
-    void *restrict const*restrict currentfunc = funcs;
+    intptr_t *restrict const*restrict currentfunc = funcs;
     unsigned char * restrict currentcell = intarray;
     unsigned char * restrict currentbuff = buffer;
     
@@ -306,7 +306,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                 printf("double Add\n");
             lastFunc = eAdd;
         #endif
-        *currentcell += (intptr_t)*currentfunc;
+        *currentcell += *(char * )currentfunc;
         currentfunc++;
         #ifdef NEXTFUNC
             goto *nextfunc;
@@ -362,7 +362,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
 
         unsigned char multiplier = 0;
-        char div = *currentfunc;
+        char div = *(char*)currentfunc;
         unsigned char cell = *currentcell;
         // multiplier = cell / (-div);
         // if(cell % -div)
@@ -377,9 +377,9 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
         unsigned char * restrict tmpcell = currentcell;
 
-        tmpcell += (intptr_t)*currentfunc;
+        tmpcell += *(char*)currentfunc;
         currentfunc++;
-        *tmpcell += ((intptr_t)*currentfunc)*multiplier;
+        *tmpcell += (*(char*)currentfunc)*multiplier;
         currentfunc++;       
         
         #ifdef NEXTFUNC
@@ -427,11 +427,11 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
         tmpcell += (intptr_t)*currentfunc;
         currentfunc++;
-        *tmpcell += ((intptr_t)*currentfunc)*multiplier;
+        *tmpcell += (*(char*)currentfunc)*multiplier;
         currentfunc++;
         tmpcell += (intptr_t)*currentfunc;
         currentfunc++;
-        *tmpcell += ((intptr_t)*currentfunc)*multiplier;
+        *tmpcell += (*(char*)currentfunc)*multiplier;
         currentfunc++;  
         
         #ifdef NEXTFUNC
@@ -515,21 +515,21 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
 
 
-        char amount = (intptr_t)*currentfunc;
+        char amount = *(char*)currentfunc;
         #ifdef NEXTFUNC
             const void * restrict const nextfunc = *(currentfunc+amount+1);
         #endif
 
         currentfunc++;
         unsigned char multiplier = 0;
-        unsigned char div = -(intptr_t)*currentfunc;
+        char div = *(char *)currentfunc;
         unsigned char cell = *currentcell;
         // multiplier = cell / (-div);
         // if(cell % -div)
 
         while(cell)
         {
-            cell -= div;
+            cell += div;
             multiplier++;
         }
         *currentcell = 0;
@@ -537,12 +537,12 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         amount-=1;
 
         unsigned char * restrict tmpcell = currentcell;
-        void *const* tmpfunc = currentfunc;
+        void *const* restrict tmpfunc = currentfunc;
         currentfunc += amount;
 
         for(char i = 0; i < amount-1; i+=2)
         {
-            tmpcell += (intptr_t)*tmpfunc;
+            tmpcell += *(char*)tmpfunc;
             tmpfunc++;
             *tmpcell += ((intptr_t)*tmpfunc)*multiplier;
             tmpfunc++;       
@@ -613,7 +613,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #else
 
         void ** nextfunc = *currentfunc;
-        if(!*currentcell)
+        if(__builtin_expect(!*currentcell, 0))
         {
             // currentfunc++;
             #ifdef BRANCHCOUNT
@@ -662,12 +662,12 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
         // printf("\nmoveloop!!!!!\n");
         currentfunc++;
-        register intptr_t jump = (intptr_t)*currentfunc;
+        register char jump = *(char*)currentfunc;
         while( *currentcell != 0)
         {
-            // #ifdef COUNT
-            //     movel++;
-            // #endif
+            #ifdef COUNT
+                movel++;
+            #endif
             currentcell += jump;
         }
         currentfunc++;
@@ -696,7 +696,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
         #endif
         *currentbuff = *currentcell;
         currentbuff++;
-        // printf("%c", cell);
+        // printf("%c", *currentcell);
         currentfunc++;
         #ifdef NEXTFUNC
             goto *nextfunc;
