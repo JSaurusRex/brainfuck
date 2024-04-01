@@ -4,16 +4,17 @@
 #include <time.h>
 #include <stdint.h>
 
-#define MAXINT 65535
+#define MAXINT 306
 #define MAXCOLON 65535
-#define MAXBUFFER 8000
+#define MAXBUFFER 6500
 
-int colon[MAXCOLON]; //what the position is of the last colon (array)
 short int lastcolon = 0;
 
 int pos = 0;
 
-void *funcs[10000];
+#define MAXFUNCS 7120
+
+void *funcs[MAXFUNCS];
 
 void displayBuffer();
 void addtoBuffer(char c);
@@ -24,6 +25,7 @@ int main(int argc, char **argv)
 {
     //checks arguments
     int isempty = 0;
+    printf("size of intptr_t %i\n", sizeof(intptr_t));
 
     for (int i = 1  ; i < argc; ++i)
     {
@@ -54,6 +56,8 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 // #define DOUBLES
 // #define BRANCHLESS
 
+// #define FIND_MAXINT
+
 
 
  __attribute__((hot)) void runJIT ()
@@ -63,8 +67,13 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
     intptr_t *restrict const*restrict currentfunc = funcs;
     unsigned char * restrict currentcell = intarray;
     unsigned char * restrict currentbuff = buffer;
+
+    #ifdef FIND_MAXINT
+        int maxValue = 0;
+    #endif
     
     {
+        int predictedSize = 0;
         int r = 0;
         int w = 0;
         int cont = 1;
@@ -78,6 +87,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                     
                     funcs[w] = &&gAdd;
                     funcs[w+1] = funcs[r+1];
+                    predictedSize += sizeof(char)+sizeof(char);
                     #ifdef SPECIALS
                         int counter = 1;
                         if(funcs[r+counter*2] == eMove && last == eLoopOpen)
@@ -113,6 +123,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                                     counter++;
                                 }
                                 counter--;
+                                predictedSize += sizeof(char)*(counter-2);
                                 // printf("counter %i\n", counter);
                                 if(counter == 3)
                                 {
@@ -137,6 +148,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                                     funcs[w] = &&gMul;
                                     funcs[w+1] = (void*)(counter);
                                     funcs[w+2] = (void*)add;
+                                    predictedSize += sizeof(char);
                                     r += counter*2 + 2;
                                     w += counter; //overwrite last one
                                 }
@@ -163,6 +175,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                     #endif
                     funcs[w] = &&gMove;
                     funcs[w+1] = funcs[r+1];
+                    predictedSize += sizeof(char)+sizeof(char);
                     w++;
                     r++;
                     break;
@@ -171,7 +184,8 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                         printf("[");
                     #endif
                     funcs[w] = &&gLoopOpen;
-                    funcs[w+1] = &funcs[((intptr_t)&funcs[r+1]-(intptr_t)funcs)/sizeof(intptr_t)-(r-w)];
+                    funcs[w+1] = &funcs[((intptr_t)&funcs[r+1]-(intptr_t)funcs)/sizeof(char)-(r-w)];
+                    predictedSize += sizeof(char)*2;
                     w++;
                     r++;
                     break;
@@ -181,6 +195,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                     #endif
                     funcs[w] = &&gLoopClose;
                     funcs[w+1] = &funcs[r+1];
+                    predictedSize += sizeof(char)*2;
                     w++;
                     r++;
                     break;
@@ -189,12 +204,14 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                         printf(".");
                     #endif
                     funcs[w] = &&gPoint;
+                    predictedSize += sizeof(char);
                     break;
                 case eClear:
                     #ifdef DEBUG
                         printf("(-)");
                     #endif
                     funcs[w] = &&gClear;
+                    predictedSize += sizeof(char);
                     break;
                 case eMoveLoop:
                     #ifdef DEBUG
@@ -202,6 +219,7 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                     #endif
                     funcs[w] = &&gMoveLoop;
                     funcs[w+1] = funcs[r+1];
+                    predictedSize += sizeof(char)+sizeof(char);
                     w++;
                     r++;
                     break;
@@ -210,6 +228,9 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
                         printf("e");
                     #endif
                     funcs[w] = &&gExit;
+                    predictedSize += sizeof(char);
+                    printf("original size %i\n", w*sizeof(intptr_t));
+                    printf("predicted size %i\n", predictedSize);
                     cont = 0;
                     break;
             }
@@ -221,13 +242,13 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
 
     printf("\n");
     //fix pointers
-    for(int i = 0; i < 10000; i++)
+    for(int i = 0; i < MAXFUNCS; i++)
     {
         if(funcs[i] == &&gLoopOpen)
         {
             int loops = 1;
             int j = i+1;
-            while(loops != 0 && funcs[j] != &&gExit && j < 10000)
+            while(loops != 0 && funcs[j] != &&gExit && j < MAXFUNCS)
             {
                 if(funcs[j] == &&gLoopOpen)
                 {
@@ -333,6 +354,11 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
             lastFunc = eMove;
         #endif
         currentcell += (intptr_t) *currentfunc;
+        #ifdef FIND_MAXINT
+            int value = currentcell-intarray;
+            if(value > maxValue)
+                maxValue = value;
+        #endif
         currentfunc++;
         #ifdef NEXTFUNC
             goto *nextfunc;
@@ -709,7 +735,12 @@ enum {eAdd, eMove, eMul, eLoopOpen, eLoopClose, ePoint, eClear, eMoveLoop, eExit
     
     float endTime = (float)clock()/CLOCKS_PER_SEC;
 
+    #ifdef FIND_MAXINT
+        printf("max int accessed: %i\n", maxValue);
+    #endif
+
     *currentbuff = '\0';
+    printf("currentbuff %i\n", currentbuff-buffer);
     printf("%s\n", buffer);
     // printf("display %i\n", currentbuff-buffer);
     #ifdef COUNT
@@ -739,7 +770,7 @@ int movecount = 0;
 int movestate = 0;
 
 int colonCount= 0;
-void compile (char c)
+void compile (char c, int * colon)
 {
     if(intstate == 1) //+ / -
     {
@@ -894,13 +925,15 @@ void load_file (char * file)
     }
     int i = 0;
     char ch;
+    int colon[MAXCOLON]; //what the position is of the last colon (array)
     while(i < size)
     {
         ch = fgetc(fp);
-        compile(ch);
+        compile(ch, colon);
         i++;
     }
     funcs[pos] = (void*)eExit;
+    printf("max size: %i\n", pos);
     fclose(fp);
     return;
 }
